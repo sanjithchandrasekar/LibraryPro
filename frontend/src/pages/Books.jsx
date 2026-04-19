@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { bookService } from '../services/bookService';
+import { issueService } from '../services/issueService';
 import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/common/Loader';
 import Modal from '../components/common/Modal';
@@ -40,6 +41,7 @@ const Books = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [borrowing, setBorrowing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ title: '', author: '', isbn: '', category_id: '', total_copies: '' });
 
@@ -105,6 +107,24 @@ const Books = () => {
       fetchData();
     } catch { toast.error('Cannot delete this book'); }
     finally { setDeleting(null); }
+  };
+
+  const handleBorrow = async (book) => {
+    setBorrowing(book.book_id);
+    try {
+      await issueService.issueBook({
+        userId: user.id,
+        bookId: book.book_id,
+        users: [{ user_id: user.id, name: user.user_metadata?.name || user.email.split('@')[0] }],
+        books: [book]
+      });
+      toast.success(`Successfully borrowed ${book.title}!`);
+      fetchData(); // Refresh books to update available_copies
+    } catch (err) {
+      toast.error(err.message || 'Failed to borrow book');
+    } finally {
+      setBorrowing(null);
+    }
   };
 
   const totalPages = Math.ceil(books.length / PAGE_SIZE);
@@ -175,7 +195,7 @@ const Books = () => {
                 <th className="table-header text-left">ISBN</th>
                 <th className="table-header text-left">Category</th>
                 <th className="table-header text-left">Availability</th>
-                {user?.role === 'Admin' && <th className="table-header text-right">Actions</th>}
+                <th className="table-header text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +246,7 @@ const Books = () => {
                     <td className="table-cell w-40">
                       <AvailabilityBar available={book.available_copies} total={book.total_copies} />
                     </td>
-                    {user?.role === 'Admin' && (
+                    {user?.role === 'Admin' ? (
                       <td className="table-cell text-right">
                         <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
@@ -247,6 +267,18 @@ const Books = () => {
                               : <Trash2 size={16} />}
                           </button>
                         </div>
+                      </td>
+                    ) : (
+                      <td className="table-cell text-right">
+                        <button
+                          onClick={() => handleBorrow(book)}
+                          disabled={book.available_copies <= 0 || borrowing === book.book_id}
+                          className="btn-primary py-1.5 px-4 text-xs shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                        >
+                          {borrowing === book.book_id ? (
+                            <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full spin" />
+                          ) : 'Borrow'}
+                        </button>
                       </td>
                     )}
                   </tr>

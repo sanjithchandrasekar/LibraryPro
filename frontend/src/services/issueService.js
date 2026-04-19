@@ -94,6 +94,31 @@ export const issueService = {
     return { fine };
   },
 
+  renewBook: async (issueId) => {
+    await delay();
+    const idx = issuesStore.findIndex(i => i.issue_id === issueId);
+    if (idx === -1) throw new Error('Issue record not found');
+
+    const issue = issuesStore[idx];
+    
+    // Check if overdue
+    const today = new Date();
+    const currentDueDate = new Date(issue.due_date);
+    if (currentDueDate < today) {
+      throw new Error('Overdue books cannot be renewed. Please return the book and pay fine first.');
+    }
+
+    const newDueDate = addDays(currentDueDate, 7);
+
+    // Update due_date
+    issuesStore[idx] = {
+      ...issue,
+      due_date: format(newDueDate, 'yyyy-MM-dd')
+    };
+
+    return issuesStore[idx];
+  },
+
   // Dynamic stats — pulls live data from booksStore and issuesStore
   getStats: async () => {
     await delay(200);

@@ -5,36 +5,73 @@ import Loader from '../components/common/Loader';
 import { Book, Clock, CheckCircle2, AlertTriangle, BookOpen, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historySearch, setHistorySearch] = useState('');
   const today = format(new Date(), 'EEEE, MMMM d, yyyy');
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
 
+  const loadData = async () => {
+    try {
+      const data = await issueService.getUserHistory(user.id);
+      setHistory(data);
+    } catch (error) {
+      console.error('Failed to load user history', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await issueService.getUserHistory(user.id);
-        setHistory(data);
-      } catch (error) {
-        console.error('Failed to load user history', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, [user.id]);
+
+  const [returningId, setReturningId] = useState(null);
+  const [renewingId, setRenewingId] = useState(null);
+
+  const handleReturn = async (issueId) => {
+    setReturningId(issueId);
+    try {
+      const { fine } = await issueService.returnBook(issueId);
+      if (fine > 0) {
+        toast.warning(`Book returned. A fine of ₹${fine} was paid.`);
+      } else {
+        toast.success(`Book returned successfully!`);
+      }
+      await loadData();
+    } catch (error) {
+      toast.error('Failed to return the book');
+    } finally {
+      setReturningId(null);
+    }
+  };
+
+  const handleRenew = async (issueId) => {
+    setRenewingId(issueId);
+    try {
+      await issueService.renewBook(issueId);
+      toast.success('Book successfully renewed for 7 days!');
+      await loadData();
+    } catch (error) {
+      toast.error(error.message || 'Failed to renew book');
+    } finally {
+      setRenewingId(null);
+    }
+  };
 
   if (loading) return <Loader fullPage />;
 
   const currentIssues = history.filter(i => i.status === 'Issued');
-  const returnedIssues = history.filter(i => i.status === 'Returned');
-  const totalFines = returnedIssues.reduce((sum, i) => sum + (i.fine_amount || 0), 0);
+  const returnedIssues = history.filter(i => i.status === 'Returned' && i.books.title.toLowerCase().includes(historySearch.toLowerCase()));
+  const totalReturned = history.filter(i => i.status === 'Returned');
+  const totalFines = totalReturned.reduce((sum, i) => sum + (i.fine_amount || 0), 0);
   
   // Calculate overdue fines for current issues dynamically
   const currIssuesWithFines = currentIssues.map(issue => {
@@ -74,7 +111,7 @@ const StudentDashboard = () => {
         <div className="bg-card border border-border rounded-3xl p-6 shadow-sm relative overflow-hidden group">
           <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-2xl opacity-20 bg-gradient-to-br from-emerald-400 to-teal-500" />
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Books Read</p>
-          <p className="text-5xl font-black tabular-nums text-foreground">{returnedIssues.length}</p>
+          <p className="text-5xl font-black tabular-nums text-foreground">{totalReturned.length}</p>
         </div>
         <div className="bg-card border border-border rounded-3xl p-6 shadow-sm relative overflow-hidden group">
           <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-2xl opacity-20 bg-gradient-to-br from-red-500 to-rose-600" />
@@ -119,15 +156,38 @@ const StudentDashboard = () => {
                         <span className="bg-amber-100 text-amber-700 text-xs font-black uppercase px-2 py-1 rounded-md">Issued</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground mb-3">
-                      <span className="flex items-center gap-1"><Calendar size={14}/> Issued: {issue.issue_date}</span>
-                      <span className="flex items-center gap-1"><Clock size={14}/> Due: {issue.due_date}</span>
-                    </div>
-                    {issue.currentFine > 0 && (
-                      <div className="flex items-center gap-2 text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg">
-                        <AlertTriangle size={14}/> Fine Accumulating: ₹{issue.currentFine}
+                    
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground mb-2">
+                          <span className="flex items-center gap-1"><Calendar size={14}/> Issued: {issue.issue_date}</span>
+                          <span className="flex items-center gap-1"><Clock size={14}/> Due: {issue.due_date}</span>
+                        </div>
+                        {issue.currentFine > 0 && (
+                          <div className="flex items-center gap-2 text-xs font-bold text-red-600 bg-red-50 p-1.5 rounded-lg w-max">
+                            <AlertTriangle size={14}/> Fine Accumulating: ₹{issue.currentFine}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <div className="flex flex-col gap-2">
+                        {!issue.isOverdue && (
+                          <button
+                            onClick={() => handleRenew(issue.issue_id)}
+                            disabled={renewingId === issue.issue_id}
+                            className="bg-primary/10 text-primary border border-primary/20 text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary/20 transition-colors whitespace-nowrap active:scale-95 disabled:opacity-50"
+                          >
+                            {renewingId === issue.issue_id ? 'Wait...' : 'Renew Book'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleReturn(issue.issue_id)}
+                          disabled={returningId === issue.issue_id}
+                          className="bg-background border border-border text-xs font-bold px-4 py-2 rounded-xl hover:bg-muted transition-colors whitespace-nowrap active:scale-95 disabled:opacity-50"
+                        >
+                          {returningId === issue.issue_id ? 'Updating...' : 'Return Book'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -137,10 +197,17 @@ const StudentDashboard = () => {
 
         {/* History */}
         <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm flex flex-col">
-          <div className="px-8 py-5 border-b border-border flex items-center justify-between">
-            <h3 className="font-black text-lg text-foreground tracking-tight flex items-center gap-2">
+          <div className="px-8 py-5 border-b border-border flex items-center justify-between gap-4">
+            <h3 className="font-black text-lg text-foreground tracking-tight flex items-center gap-2 whitespace-nowrap">
               <CheckCircle2 size={18} className="text-emerald-500"/> Reading History
             </h3>
+            <input
+              type="text"
+              placeholder="Search history..."
+              value={historySearch}
+              onChange={e => setHistorySearch(e.target.value)}
+              className="text-sm px-3 py-1.5 rounded-xl border border-border bg-muted/20 w-40"
+            />
           </div>
           <div className="p-4 flex-1">
             {returnedIssues.length === 0 ? (
