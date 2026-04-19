@@ -8,6 +8,7 @@ import Books from './pages/Books';
 import Users from './pages/Users';
 import Issues from './pages/Issues';
 import Reports from './pages/Reports';
+import TestConnection from './pages/TestConnection';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ function App() {
     <ThemeProvider>
       <Router>
         <Routes>
+          <Route path="/test" element={<TestConnection />} />
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
