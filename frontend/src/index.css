@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 33% 98%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+ 
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+ 
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+ 
+    --accent: 262 83% 96%;
+    --accent-foreground: 262 83% 40%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
+ 
+    --radius: 1.25rem;
+
+    /* Sidebar - Soft Glass Material */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-muted: 220 9% 46%;
+  }
+ 
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 224 50% 6%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 224 50% 6%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 262 83% 68%;
+    --primary-foreground: 224 71% 4%;
+ 
+    --secondary: 220 20% 12%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 220 20% 12%;
+    --muted-foreground: 215 20% 65%;
+ 
+    --accent: 262 50% 20%;
+    --accent-foreground: 262 83% 80%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 220 20% 15%;
+    --input: 220 20% 15%;
+    --ring: 262 83% 68%;
+
+    --sidebar: 224 71% 3%;
+    --sidebar-foreground: 210 40% 92%;
+    --sidebar-muted: 215 16% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.05), transparent 25%),
+                      radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.04), transparent 25%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .sidebar-bg {
+    background-color: hsl(var(--sidebar) / 0.85);
+    @apply backdrop-blur-2xl border-r border-white/10 dark:border-white/5;
+  }
+  .sidebar-text {
+    color: hsl(var(--sidebar-foreground));
+  }
+  .sidebar-muted {
+    color: hsl(var(--sidebar-muted));
+  }
+  .glass { 
+    @apply bg-card/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+  }
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:border-primary/20 dark:hover:border-primary/30;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 bg-muted/60 backdrop-blur-sm rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/40 transition-all outline-none shadow-inner;
+  }
+  .table-header {
+    @apply px-5 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground bg-muted/30 backdrop-blur border-b border-border;
+  }
+  .table-cell {
+    @apply px-5 py-4 text-sm font-medium border-b border-border/50 transition-colors;
+  }
+  .badge {
+    @apply inline-flex items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-400 dark:to-indigo-300;
+  }
+}
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  @apply relative overflow-hidden bg-muted/50 rounded-xl;
+}
+.skeleton::after {
+  content: "";
+  @apply absolute inset-0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.dark .skeleton::after {
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+}
