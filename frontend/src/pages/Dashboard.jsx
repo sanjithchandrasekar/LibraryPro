@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { issueService } from '../services/issueService';
 import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/common/Loader';
@@ -212,9 +213,9 @@ const Dashboard = () => {
             </div>
             <h3 className="font-black text-lg text-foreground tracking-tight">Recent Activity</h3>
           </div>
-          <a href="/issues" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
+          <Link to="/issues" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
             View details <ArrowRight size={14} />
-          </a>
+          </Link>
         </div>
         <div className="divide-y divide-border/50">
           {recentIssues.map((issue) => {

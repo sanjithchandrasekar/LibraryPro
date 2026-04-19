@@ -103,7 +103,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPw(!showPw)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors z-10"
                   >
                     {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>

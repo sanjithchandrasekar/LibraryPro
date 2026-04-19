@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { issueService } from '../services/issueService';
-import { bookService } from '../services/bookService';
-import { userService } from '../services/userService';
 import Loader from '../components/common/Loader';
-import Modal from '../components/common/Modal';
 import {
-  Plus, RotateCcw, AlertTriangle, CheckCircle2,
-  Clock, Book, CalendarDays, IndianRupee, ArrowLeftRight
+  AlertTriangle, CheckCircle2,
+  Clock, Book, CalendarDays, ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { format, differenceInDays } from 'date-fns';
@@ -40,65 +37,22 @@ const filterTabs = [
 
 const Issues = () => {
   const [issues, setIssues] = useState([]);
-  const [allBooks, setAllBooks] = useState([]);       // full list for availability check
-  const [availableBooks, setAvailableBooks] = useState([]); // for dropdown display
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState('');
-  const [selectedBook, setSelectedBook] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [returning, setReturning] = useState(null);
 
   const loadAll = async () => {
     setLoading(true);
-    const [i, b, u] = await Promise.all([
-      issueService.getIssues(),
-      bookService.getBooks(),   // fetch ALL books
-      userService.getUsers()
-    ]);
+    const i = await issueService.getIssues();
     setIssues(i);
-    setAllBooks(b);                                    // full list for service checks
-    setAvailableBooks(b.filter(bk => bk.available_copies > 0)); // dropdown only shows available
-    setUsers(u);
     setLoading(false);
   };
 
   useEffect(() => { 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll(); 
-    // Add auto-refresh to handle race condition with multiple tabs (every 5 seconds)
-    const interval = setInterval(loadAll, 5000);
-    return () => clearInterval(interval);
+    // Removed auto-refresh interval as it causes destructive UI flashes.
   }, []);
 
-  const handleIssue = async (e) => {
-    e.preventDefault();
-    if (!selectedUser || !selectedBook) { toast.warning('Please select a member and a book.'); return; }
-    setSubmitting(true);
-    try {
-      // Pass full books list so issueService can run the availability check
-      await issueService.issueBook({ userId: selectedUser, bookId: selectedBook, users, books: allBooks });
-      toast.success('📚 Book issued successfully!');
-      setIsModalOpen(false);
-      setSelectedUser(''); setSelectedBook('');
-      loadAll();
-    } catch (err) { toast.error(err.message); }
-    finally { setSubmitting(false); }
-  };
 
-  const handleReturn = async (issueId) => {
-    setReturning(issueId);
-    try {
-      const { fine } = await issueService.returnBook(issueId);
-      fine > 0
-        ? toast.info(`Book returned. Late fine: ₹${fine}`, { autoClose: 5000 })
-        : toast.success('✅ Book returned — no fine!');
-      loadAll();
-    } catch (err) { toast.error(err.message); }
-    finally { setReturning(null); }
-  };
 
   const filtered = issues.filter(i => {
     if (filter === 'all') return true;
@@ -122,13 +76,10 @@ const Issues = () => {
             <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
               <ArrowLeftRight size={18} className="text-white" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight">Circulation Desk</h1>
+            <h1 className="text-2xl font-black tracking-tight">Staff Operations Desk</h1>
           </div>
-          <p className="text-sm text-muted-foreground font-medium ml-12">Issue and receive book returns with automatic fine calculation.</p>
+          <p className="text-sm text-muted-foreground font-medium ml-12">View and manage all member loans, overdue books, and return verifications.</p>
         </div>
-        <button id="issue-book-btn" onClick={() => setIsModalOpen(true)} className="btn-primary">
-          <Plus size={18} /> Issue a Book
-        </button>
       </div>
 
       {/* Filter Stat Cards */}
@@ -173,13 +124,12 @@ const Issues = () => {
                   <th className="table-header text-left">Book</th>
                   <th className="table-header text-left">Timeline</th>
                   <th className="table-header text-left">Status</th>
-                  <th className="table-header text-right">Fine / Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={5}>
                       <div className="py-20 text-center">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted flex items-center justify-center">
                           <Book size={28} className="text-muted-foreground/40" />
@@ -218,33 +168,16 @@ const Issues = () => {
                           <Clock size={11} />
                           <span>Due: {format(new Date(h.due_date), 'MMM d, yy')}</span>
                         </div>
-                        <DaysLabel issue={h} />
+                        {h.status === 'Returned' && h.return_date && (
+                          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle2 size={11} />
+                            <span className="font-semibold">Returned: {format(new Date(h.return_date), 'MMM d, yy')}</span>
+                          </div>
+                        )}
+                        {h.status !== 'Returned' && <DaysLabel issue={h} />}
                       </div>
                     </td>
                     <td className="table-cell"><StatusBadge issue={h} /></td>
-                    <td className="table-cell text-right">
-                      {h.fine_amount > 0 && (
-                        <div className="flex items-center justify-end gap-1 text-destructive text-sm font-black mb-1.5">
-                          <IndianRupee size={13} /> {h.fine_amount}
-                        </div>
-                      )}
-                      {h.status === 'Issued' ? (
-                        <button
-                          onClick={() => handleReturn(h.issue_id)}
-                          disabled={returning === h.issue_id}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
-                        >
-                          {returning === h.issue_id
-                            ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full spin" />
-                            : <RotateCcw size={13} />}
-                          Return
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                          <CheckCircle2 size={14} /> Done
-                        </span>
-                      )}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -253,65 +186,6 @@ const Issues = () => {
         )}
       </div>
 
-      {/* Issue Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-        title="Issue a Book" description="Select a member and available book to create an issue record.">
-        <form onSubmit={handleIssue} className="space-y-5">
-          <div>
-            <label className="block text-sm font-bold mb-2 text-foreground/80">Select Member *</label>
-            <select required value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="input-field">
-              <option value="">Choose library member...</option>
-              {users.map(u => (
-                <option key={u.user_id} value={u.user_id}>{u.name} — {u.role}, {u.department}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-bold mb-2 text-foreground/80">Select Book *</label>
-            <select required value={selectedBook} onChange={e => setSelectedBook(e.target.value)} className="input-field">
-              <option value="">Choose available book...</option>
-              {availableBooks.map(b => (
-                <option key={b.book_id} value={b.book_id}>{b.title} — {b.author} ({b.available_copies} avail.)</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Policy Box */}
-          <div className="bg-primary/5 border border-primary/15 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-lg bg-primary/15 flex items-center justify-center">
-                <Book size={11} className="text-primary" />
-              </div>
-              <p className="font-black text-sm text-primary">Loan Policy</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {[
-                ['📅 Duration', '7 days'],
-                ['💸 Late Fine', '₹10/day'],
-                ['📆 Issue Date', 'Today'],
-                ['⏰ Due Date', '+7 days'],
-              ].map(([k, v]) => (
-                <div key={k} className="flex items-center gap-2 text-muted-foreground">
-                  <span>{k}:</span>
-                  <span className="text-foreground font-bold">{v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <button type="button" onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-3 rounded-2xl border border-border hover:bg-muted font-bold text-sm transition-all">
-              Cancel
-            </button>
-            <button type="submit" disabled={submitting} className="flex-1 btn-primary justify-center py-3">
-              {submitting
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spin" />
-                : '✅ Confirm Issue'}
-            </button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };
