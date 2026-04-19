@@ -75,10 +75,11 @@ const StudentDashboard = () => {
   
   // Calculate overdue fines for current issues dynamically
   const currIssuesWithFines = currentIssues.map(issue => {
-    const isOverdue = new Date(issue.due_date) < new Date();
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const isOverdue = issue.due_date < todayStr;
     const diffTime = Math.abs(new Date() - new Date(issue.due_date));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-    const currentFine = isOverdue ? diffDays * 10 : 0;
+    const currentFine = isOverdue && (issue.due_date < todayStr) ? diffDays * 10 : 0;
     return { ...issue, isOverdue, currentFine };
   });
 
@@ -220,6 +221,7 @@ const StudentDashboard = () => {
                   <div key={issue.issue_id} className="p-5 rounded-2xl bg-muted/20 border border-border/50">
                     <h4 className="font-bold text-foreground mb-1">{issue.books.title}</h4>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-muted-foreground">
+                      <span>Due: {issue.due_date}</span>
                       <span>Returned: {issue.return_date}</span>
                       {issue.fine_amount > 0 && (
                         <span className="text-red-500 font-bold">Fine Paid: ₹{issue.fine_amount}</span>
