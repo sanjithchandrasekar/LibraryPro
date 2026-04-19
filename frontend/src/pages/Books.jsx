@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { bookService } from '../services/bookService';
+import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/common/Loader';
 import Modal from '../components/common/Modal';
 import {
@@ -28,6 +29,7 @@ const AvailabilityBar = ({ available, total }) => {
 };
 
 const Books = () => {
+  const { user } = useAuth();
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,9 +123,11 @@ const Books = () => {
           </div>
           <p className="text-sm text-muted-foreground font-medium ml-12">{books.length} books found</p>
         </div>
-        <button id="add-book-btn" onClick={openAdd} className="btn-primary">
-          <Plus size={18} /> Add New Book
-        </button>
+        {user?.role === 'Admin' && (
+          <button id="add-book-btn" onClick={openAdd} className="btn-primary">
+            <Plus size={18} /> Add New Book
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -171,7 +175,7 @@ const Books = () => {
                 <th className="table-header text-left">ISBN</th>
                 <th className="table-header text-left">Category</th>
                 <th className="table-header text-left">Availability</th>
-                <th className="table-header text-right">Actions</th>
+                {user?.role === 'Admin' && <th className="table-header text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -222,27 +226,29 @@ const Books = () => {
                     <td className="table-cell w-40">
                       <AvailabilityBar available={book.available_copies} total={book.total_copies} />
                     </td>
-                    <td className="table-cell text-right">
-                      <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button
-                          onClick={() => openEdit(book)}
-                          className="p-2 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all hover:scale-110 active:scale-95"
-                          title="Edit book"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(book.book_id)}
-                          disabled={deleting === book.book_id}
-                          className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all hover:scale-110 active:scale-95"
-                          title="Delete book"
-                        >
-                          {deleting === book.book_id
-                            ? <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full spin" />
-                            : <Trash2 size={16} />}
-                        </button>
-                      </div>
-                    </td>
+                    {user?.role === 'Admin' && (
+                      <td className="table-cell text-right">
+                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button
+                            onClick={() => openEdit(book)}
+                            className="p-2 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all hover:scale-110 active:scale-95"
+                            title="Edit book"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(book.book_id)}
+                            disabled={deleting === book.book_id}
+                            className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all hover:scale-110 active:scale-95"
+                            title="Delete book"
+                          >
+                            {deleting === book.book_id
+                              ? <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full spin" />
+                              : <Trash2 size={16} />}
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

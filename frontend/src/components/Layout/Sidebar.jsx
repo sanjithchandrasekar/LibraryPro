@@ -6,12 +6,17 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-const navItems = [
+const adminNav = [
   { title: 'Dashboard', icon: LayoutDashboard, path: '/', end: true },
   { title: 'Books', icon: BookOpen, path: '/books' },
   { title: 'Users', icon: UsersIcon, path: '/users' },
   { title: 'Issues', icon: ArrowLeftRight, path: '/issues' },
   { title: 'Reports', icon: BarChart3, path: '/reports' },
+];
+
+const userNav = [
+  { title: 'Dashboard', icon: LayoutDashboard, path: '/', end: true },
+  { title: 'Library Catalog', icon: BookOpen, path: '/books' },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -41,7 +46,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Nav Menu */}
       <nav className="flex-1 px-4 py-8 space-y-1.5">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pl-4 mb-4">Main Menu</p>
-        {navItems.map((item) => {
+        {(user?.role === 'Admin' ? adminNav : userNav).map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -72,8 +77,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             {avatarChar}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-foreground truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Administrator</p>
+            <p className="text-sm font-black text-foreground truncate">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{user?.role === 'Admin' ? 'Administrator' : user?.role || 'User'}</p>
           </div>
         </div>
         <button

@@ -129,8 +129,10 @@ const Login = () => {
                   <ShieldCheck size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60">Mock Environment</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60">Mock Environment - Admin</p>
                   <p className="text-xs font-black text-foreground truncate">admin@library.com · admin123</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60 mt-2">Mock Environment - Student</p>
+                  <p className="text-xs font-black text-foreground truncate">student@library.com · student123</p>
                 </div>
               </div>
             </div>

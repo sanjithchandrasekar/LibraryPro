@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { issueService } from '../services/issueService';
 import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/common/Loader';
+import StudentDashboard from './StudentDashboard';
 import { 
   Book, ArrowUpRight, CheckCircle2, AlertTriangle, 
   TrendingUp, TrendingDown, Users, BookOpen, Clock, ArrowRight, RefreshCw
@@ -80,8 +81,14 @@ const Dashboard = () => {
 
   useEffect(() => { 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadAll(); 
-  }, []);
+    if (user?.role === 'Admin') {
+      loadAll(); 
+    }
+  }, [user]);
+
+  if (user?.role !== 'Admin') {
+    return <StudentDashboard />;
+  }
 
   if (loading) return <Loader fullPage />;
   if (!stats) return (
