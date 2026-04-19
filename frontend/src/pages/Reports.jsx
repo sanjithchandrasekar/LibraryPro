@@ -32,8 +32,6 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('all');
 
-  useEffect(() => { loadAll(); }, []);
-
   const loadAll = async () => {
     setLoading(true);
     const [i, w, c] = await Promise.all([
@@ -46,6 +44,11 @@ const Reports = () => {
     setCatData(c);
     setLoading(false);
   };
+
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAll(); 
+  }, []);
 
   const today = new Date();
   const totalFine = issues.reduce((acc, cur) => acc + (Number(cur.fine_amount) || 0), 0);

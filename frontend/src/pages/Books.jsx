@@ -46,9 +46,7 @@ const Books = () => {
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { fetchData(); }, [debouncedSearch, filterCat]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [b, c] = await Promise.all([bookService.getBooks(debouncedSearch, filterCat), bookService.getCategories()]);
@@ -57,7 +55,13 @@ const Books = () => {
       setPage(1);
     } catch { toast.error('Failed to load books'); }
     finally { setLoading(false); }
-  };
+  }, [debouncedSearch, filterCat]);
+
+  useEffect(() => { 
+    // Parse filter category as number to prevent type mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData(); 
+  }, [fetchData]);
 
   const openAdd = () => {
     setEditingBook(null);
@@ -131,7 +135,7 @@ const Books = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search title, author, ISBN..."
-            className="input-field pl-11 py-2.5"
+            className="input-field !pl-11 py-2.5"
           />
         </div>
         <div className="flex items-center gap-2.5">

@@ -51,8 +51,6 @@ const Issues = () => {
   const [submitting, setSubmitting] = useState(false);
   const [returning, setReturning] = useState(null);
 
-  useEffect(() => { loadAll(); }, []);
-
   const loadAll = async () => {
     setLoading(true);
     const [i, b, u] = await Promise.all([
@@ -66,6 +64,14 @@ const Issues = () => {
     setUsers(u);
     setLoading(false);
   };
+
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAll(); 
+    // Add auto-refresh to handle race condition with multiple tabs (every 5 seconds)
+    const interval = setInterval(loadAll, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleIssue = async (e) => {
     e.preventDefault();

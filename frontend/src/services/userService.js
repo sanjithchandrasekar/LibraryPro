@@ -46,8 +46,9 @@ export const userService = {
 
   getUserHistory: async (userId) => {
     await delay();
-    // Return mock history entries for a user
-    const { mockIssues } = await import('./mockData');
-    return mockIssues.filter(i => i.user_id === userId);
+    // Get live issue history from issueService instead of stale mockData
+    const { issueService } = await import('./issueService');
+    const allIssues = await issueService.getIssues();
+    return allIssues.filter(i => i.user_id === userId);
   }
 };

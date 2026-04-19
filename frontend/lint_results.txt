@@ -1,0 +1,258 @@
+﻿
+E:\Projects\dbms\frontend\src\components\Layout\Sidebar.jsx
+  1:17  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+E:\Projects\dbms\frontend\src\components\common\Loader.jsx
+  24:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  22 |           </div>
+  23 |           <div className="flex flex-col items-center gap-2">
+> 24 |             <Spinner />
+     |              ^^^^^^^ This component is created during render
+  25 |             <p className="text-sm text-muted-foreground font-semibold tracking-wide mt-1">Loading...</p>
+  26 |           </div>
+  27 |         </div>
+
+   5 |   const sizes = { sm: 'w-5 h-5 border-2', md: 'w-9 h-9 border-2', lg: 'w-14 h-14 border-3' };
+   6 |
+>  7 |   const Spinner = () => (
+     |                   ^^^^^^^
+>  8 |     <div className="relative flex items-center justify-center">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |       <div className={`${sizes[size]} border-primary/20 border-t-primary rounded-full spin`} />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <div className="absolute inset-0 flex items-center justify-center">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |         <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 14 |   );
+     | ^^^^ The component is created during render here
+  15 |
+  16 |   if (fullPage) {
+  17 |     return (  react-hooks/static-components
+  34:8   error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  32 |   return (
+  33 |     <div className="flex items-center justify-center p-12">
+> 34 |       <Spinner />
+     |        ^^^^^^^ This component is created during render
+  35 |     </div>
+  36 |   );
+  37 | };
+
+   5 |   const sizes = { sm: 'w-5 h-5 border-2', md: 'w-9 h-9 border-2', lg: 'w-14 h-14 border-3' };
+   6 |
+>  7 |   const Spinner = () => (
+     |                   ^^^^^^^
+>  8 |     <div className="relative flex items-center justify-center">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |       <div className={`${sizes[size]} border-primary/20 border-t-primary rounded-full spin`} />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <div className="absolute inset-0 flex items-center justify-center">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |         <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 14 |   );
+     | ^^^^ The component is created during render here
+  15 |
+  16 |   if (fullPage) {
+  17 |     return (                                                                                                                                           react-hooks/static-components
+
+E:\Projects\dbms\frontend\src\context\AuthContext.jsx
+  3:14  error  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file  react-refresh/only-export-components
+
+E:\Projects\dbms\frontend\src\context\ThemeContext.jsx
+  3:14  error  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file  react-refresh/only-export-components
+
+E:\Projects\dbms\frontend\src\pages\Books.jsx
+   1:38  error    'useCallback' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+  51:5   error    Error: Cannot access variable before it is declared
+
+`fetchData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  49 |   useEffect(() => { 
+  50 |     // Parse filter category as number to prevent type mismatch
+> 51 |     fetchData(); 
+     |     ^^^^^^^^^ `fetchData` accessed before it is declared
+  52 |   }, [debouncedSearch, filterCat]);
+  53 |
+  54 |   const fetchData = async () => {
+
+  52 |   }, [debouncedSearch, filterCat]);
+  53 |
+> 54 |   const fetchData = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 56 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 57 |       const [b, c] = await Promise.all([bookService.getBooks(debouncedSearch, filterCat), bookService.getCategories()]);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 58 |       setBooks(b);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 59 |       setCategories(c);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 60 |       setPage(1);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 61 |     } catch { toast.error('Failed to load books'); }
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 62 |     finally { setLoading(false); }
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 63 |   };
+     | ^^^^^ `fetchData` is declared here
+  64 |
+  65 |   const openAdd = () => {
+  66 |     setEditingBook(null);  react-hooks/immutability
+  52:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+E:\Projects\dbms\frontend\src\pages\Dashboard.jsx
+  17:41  error  'Icon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  64:21  error  Error: Cannot access variable before it is declared
+
+`loadAll` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  62 |   const adminName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin';
+  63 |
+> 64 |   useEffect(() => { loadAll(); }, []);
+     |                     ^^^^^^^ `loadAll` accessed before it is declared
+  65 |
+  66 |   const loadAll = async () => {
+  67 |     setLoading(true);
+
+  64 |   useEffect(() => { loadAll(); }, []);
+  65 |
+> 66 |   const loadAll = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 68 |     const [s, w, c, allIssues] = await Promise.all([
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 78 |     setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 79 |   };
+     | ^^^^^ `loadAll` is declared here
+  80 |
+  81 |   if (loading) return <Loader fullPage />;
+  82 |   if (!stats) return (  react-hooks/immutability
+
+E:\Projects\dbms\frontend\src\pages\Issues.jsx
+  55:5  error  Error: Cannot access variable before it is declared
+
+`loadAll` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  53 |
+  54 |   useEffect(() => { 
+> 55 |     loadAll(); 
+     |     ^^^^^^^ `loadAll` accessed before it is declared
+  56 |     // Add auto-refresh to handle race condition with multiple tabs (every 5 seconds)
+  57 |     const interval = setInterval(loadAll, 5000);
+  58 |     return () => clearInterval(interval);
+
+  59 |   }, []);
+  60 |
+> 61 |   const loadAll = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 63 |     const [i, b, u] = await Promise.all([
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 72 |     setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 73 |   };
+     | ^^^^^ `loadAll` is declared here
+  74 |
+  75 |   const handleIssue = async (e) => {
+  76 |     e.preventDefault();  react-hooks/immutability
+
+E:\Projects\dbms\frontend\src\pages\Reports.jsx
+  35:21  error  Error: Cannot access variable before it is declared
+
+`loadAll` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  33 |   const [tab, setTab] = useState('all');
+  34 |
+> 35 |   useEffect(() => { loadAll(); }, []);
+     |                     ^^^^^^^ `loadAll` accessed before it is declared
+  36 |
+  37 |   const loadAll = async () => {
+  38 |     setLoading(true);
+
+  35 |   useEffect(() => { loadAll(); }, []);
+  36 |
+> 37 |   const loadAll = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 39 |     const [i, w, c] = await Promise.all([
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 47 |     setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 48 |   };
+     | ^^^^^ `loadAll` is declared here
+  49 |
+  50 |   const today = new Date();
+  51 |   const totalFine = issues.reduce((acc, cur) => acc + (Number(cur.fine_amount) || 0), 0);  react-hooks/immutability
+
+E:\Projects\dbms\frontend\src\pages\Users.jsx
+  11:10  error    'format' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  34:10  error    'isModalOpen' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  36:10  error    'historyModal' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+  37:10  error    'historyData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  38:10  error    'historyLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  39:10  error    'submitting' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+  40:10  error    'deleting' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  44:26  error    Error: Cannot access variable before it is declared
+
+`fetchUsers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  42 |
+  43 |   useEffect(() => {
+> 44 |     const t = setTimeout(fetchUsers, 300);
+     |                          ^^^^^^^^^^ `fetchUsers` accessed before it is declared
+  45 |     return () => clearTimeout(t);
+  46 |   }, [search]);
+  47 |
+
+  46 |   }, [search]);
+  47 |
+> 48 |   const fetchUsers = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 50 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 51 |       setUsers(await userService.getUsers(search));
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 52 |     } catch { toast.error('Failed to load users'); }
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 53 |     finally { setLoading(false); }
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 54 |   };
+     | ^^^^^ `fetchUsers` is declared here
+  55 |
+  56 |   const openAdd = () => {
+  57 |     setEditingUser(null);  react-hooks/immutability
+  46:6   warning  React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+  68:9   error    'handleSubmit' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+  96:9   error    'handleDelete' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+
+E:\Projects\dbms\frontend\src\services\issueService.js
+  101:11  error  'todayStr' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+Γ£û 24 problems (22 errors, 2 warnings)
+

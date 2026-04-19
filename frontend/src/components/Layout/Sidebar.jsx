@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Users as UsersIcon, ArrowLeftRight,
@@ -16,40 +16,31 @@ const navItems = [
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { signOut, user } = useAuth();
+  const avatarChar = user?.email?.charAt(0).toUpperCase() || 'A';
 
   return (
     <aside 
-      className={`fixed lg:sticky top-0 left-0 h-screen w-72 sidebar-bg flex flex-col z-50 transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0
+      className={`fixed lg:sticky top-0 left-0 h-screen w-72 bg-white dark:bg-slate-950 border-r border-border flex flex-col z-50 transition-transform duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}
     >
-      {/* Logo */}
-      <div className="px-6 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-3.5 group cursor-pointer">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
-            <BookMarked size={20} className="text-white drop-shadow-sm" />
+      {/* Branding */}
+      <div className="px-8 py-8 flex items-center justify-between">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <BookMarked size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-foreground font-black text-xl leading-none tracking-tight">Library<span className="text-primary text-gradient">Pro</span></h1>
-            <p className="text-[11px] mt-1 font-semibold tracking-wide" style={{ color: 'hsl(var(--sidebar-muted))' }}>MANAGEMENT SYSTEM</p>
+            <h1 className="text-foreground font-black text-xl tracking-tight leading-none">Library<span className="text-primary">Pro</span></h1>
+            <p className="text-[10px] mt-1 font-bold tracking-widest text-muted-foreground uppercase">Management System</p>
           </div>
         </div>
-        
-        {/* Mobile Close Button */}
-        <button 
-          onClick={onClose}
-          className="lg:hidden p-2 rounded-xl hover:bg-muted sidebar-text transition-all hover:scale-105 active:scale-95"
-        >
-          <X size={20} />
-        </button>
+        <button onClick={onClose} className="lg:hidden p-2 rounded-xl hover:bg-muted"><X size={20} /></button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <p className="text-[10px] font-bold uppercase tracking-widest pl-3 mb-3" style={{ color: 'hsl(var(--sidebar-muted))' }}>
-          Main Menu
-        </p>
-
+      {/* Nav Menu */}
+      <nav className="flex-1 px-4 py-8 space-y-1.5">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pl-4 mb-4">Main Menu</p>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -59,65 +50,37 @@ const Sidebar = ({ isOpen, onClose }) => {
               end={item.end}
               onClick={() => { if (window.innerWidth < 1024) onClose(); }}
               className={({ isActive }) =>
-                `group relative flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm mb-1.5 overflow-hidden
+                `group flex items-center gap-4 px-4 py-3.5 rounded-[1.5rem] transition-all duration-200 font-bold text-sm
                 ${isActive
-                  ? 'bg-primary/10 text-primary shadow-sm dark:bg-primary/20 dark:text-primary-foreground'
-                  : 'sidebar-text hover:bg-muted/50 dark:hover:bg-white/5'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-primary rounded-r-full shadow-[0_0_10px_theme(colors.primary.DEFAULT)]" />
-                  )}
-                  <Icon size={20} className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-primary dark:text-primary-foreground drop-shadow-md' : 'sidebar-muted group-hover:text-foreground'}`} />
-                  <span className="relative z-10 tracking-wide">{item.title}</span>
-                  {isActive && (
-                    <ChevronRight size={16} className="ml-auto relative z-10 text-primary/70 dark:text-primary-foreground/70" />
-                  )}
-                </>
-              )}
+              <Icon size={20} />
+              <span className="tracking-wide">{item.title}</span>
+              <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-40 transition-opacity" />
             </NavLink>
           );
         })}
-
-        <div className="pt-4">
-          <p className="text-[10px] font-black uppercase tracking-widest pl-4 mb-3" style={{ color: 'hsl(var(--sidebar-muted))' }}>
-            System
-          </p>
-          <div className="px-4 py-3 rounded-2xl bg-muted/50 border border-border">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50"></div>
-              <span className="text-xs font-bold text-muted-foreground">Mock Mode</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground/70 font-medium">
-              Database not connected
-            </p>
-          </div>
-        </div>
       </nav>
 
-      {/* User Footer */}
-      <div className="px-5 pb-8 relative">
-        <div className="absolute top-0 left-5 right-5 h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6"></div>
-        <div className="bg-card glass border border-white/20 dark:border-white/10 rounded-2xl p-4 mt-6 mb-3 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-105 transition-transform duration-300 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-              {user?.email?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">Administrator</p>
-            </div>
+      {/* User Card & Sign Out */}
+      <div className="px-4 pb-8 space-y-3">
+        <div className="bg-muted/40 rounded-[2rem] p-4 flex items-center gap-3.5 border border-border/50">
+          <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black text-sm shadow-md">
+            {avatarChar}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-foreground truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Administrator</p>
           </div>
         </div>
-
         <button
           onClick={signOut}
-          className="flex items-center gap-2.5 w-full px-4 py-3 rounded-2xl text-sm font-bold text-muted-foreground hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
+          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-[1.5rem] text-sm font-bold text-muted-foreground hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-all"
         >
-          <LogOut size={16} className="group-hover:scale-110 transition-transform duration-200" />
+          <LogOut size={18} />
           Sign Out
         </button>
       </div>

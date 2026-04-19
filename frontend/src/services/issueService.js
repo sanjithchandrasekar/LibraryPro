@@ -10,6 +10,11 @@ const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 export const issueService = {
   getIssues: async (status = null) => {
     await delay();
+    // Validate status parameter
+    const validStatuses = ['Issued', 'Returned'];
+    if (status && !validStatuses.includes(status)) {
+      throw new Error(`Invalid status '${status}'. Must be one of: ${validStatuses.join(', ')}`);
+    }
     let result = [...issuesStore];
     if (status) result = result.filter(i => i.status === status);
     return result.sort((a, b) => new Date(b.issue_date) - new Date(a.issue_date));
@@ -67,9 +72,11 @@ export const issueService = {
 
     const issue = issuesStore[idx];
     const returnDate = new Date();
+    // Parse date string to Date object for proper comparison
     const dueDate = new Date(issue.due_date);
 
     // === CHECK DELAY (as per flowchart) ===
+    // Use proper Date comparison instead of string comparison
     const diffDays = differenceInDays(returnDate, dueDate);
     const fine = diffDays > 0 ? diffDays * 10 : 0; // ₹10 per day late
 
@@ -90,9 +97,10 @@ export const issueService = {
   // Dynamic stats — pulls live data from booksStore and issuesStore
   getStats: async () => {
     await delay(200);
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = new Date();
     const issued = issuesStore.filter(i => i.status === 'Issued');
-    const overdue = issued.filter(i => i.due_date < today);
+    // Use proper Date comparison instead of string comparison
+    const overdue = issued.filter(i => new Date(i.due_date) < today);
     const { totalBooks, availableBooks } = bookService.getBookStats();
 
     return {

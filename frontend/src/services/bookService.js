@@ -99,7 +99,12 @@ export const bookService = {
 
   deleteBook: async (id) => {
     await delay();
-    // Prevent deletion if book has active issues
+    // Check if book has active issues before deletion
+    const { issueService } = await import('./issueService');
+    const activeIssues = await issueService.getIssues('Issued');
+    if (activeIssues.some(i => i.book_id === id)) {
+      throw new Error('Cannot delete book with active issues. Please wait for all copies to be returned.');
+    }
     booksStore = booksStore.filter(b => b.book_id !== id);
   },
 
