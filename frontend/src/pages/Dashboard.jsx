@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { issueService } from '../services/issueService';
+import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/common/Loader';
 import {
   Book, ArrowUpRight, CheckCircle2, AlertTriangle,
@@ -10,7 +11,6 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { format } from 'date-fns';
-import { mockIssues } from '../services/mockData';
 
 const PIE_COLORS = ['#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'];
 
@@ -49,28 +49,35 @@ const CustomBarTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [weekly, setWeekly] = useState([]);
   const [catData, setCatData] = useState([]);
+  const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const today = format(new Date(), 'EEEE, MMMM d, yyyy');
+
+  // Dynamic greeting based on time of day
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const adminName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin';
 
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
     setLoading(true);
-    const [s, w, c] = await Promise.all([
+    const [s, w, c, allIssues] = await Promise.all([
       issueService.getStats(),
       issueService.getWeeklyData(),
       issueService.getCategoryData(),
+      issueService.getIssues(),   // load live issues for Recent Circulation
     ]);
     setStats(s);
     setWeekly(w);
     setCatData(c);
+    setRecentIssues(allIssues.slice(0, 5)); // live recent 5
     setLoading(false);
   };
-
-  const recentIssues = mockIssues.slice(0, 5);
 
   if (loading) return <Loader fullPage />;
 
@@ -81,7 +88,7 @@ const Dashboard = () => {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">{today}</p>
           <h1 className="text-3xl font-black tracking-tight text-foreground">
-            Good evening, <span className="text-gradient">Admin</span> 👋
+            {greeting}, <span className="text-gradient">{adminName}</span> 👋
           </h1>
           <p className="text-muted-foreground mt-1.5 text-sm font-medium">Here's what's happening at the library today.</p>
         </div>

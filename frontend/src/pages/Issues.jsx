@@ -40,7 +40,8 @@ const filterTabs = [
 
 const Issues = () => {
   const [issues, setIssues] = useState([]);
-  const [books, setBooks] = useState([]);
+  const [allBooks, setAllBooks] = useState([]);       // full list for availability check
+  const [availableBooks, setAvailableBooks] = useState([]); // for dropdown display
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -56,11 +57,12 @@ const Issues = () => {
     setLoading(true);
     const [i, b, u] = await Promise.all([
       issueService.getIssues(),
-      bookService.getBooks(),
+      bookService.getBooks(),   // fetch ALL books
       userService.getUsers()
     ]);
     setIssues(i);
-    setBooks(b.filter(bk => bk.available_copies > 0));
+    setAllBooks(b);                                    // full list for service checks
+    setAvailableBooks(b.filter(bk => bk.available_copies > 0)); // dropdown only shows available
     setUsers(u);
     setLoading(false);
   };
@@ -70,7 +72,8 @@ const Issues = () => {
     if (!selectedUser || !selectedBook) { toast.warning('Please select a member and a book.'); return; }
     setSubmitting(true);
     try {
-      await issueService.issueBook({ userId: selectedUser, bookId: selectedBook, users, books });
+      // Pass full books list so issueService can run the availability check
+      await issueService.issueBook({ userId: selectedUser, bookId: selectedBook, users, books: allBooks });
       toast.success('📚 Book issued successfully!');
       setIsModalOpen(false);
       setSelectedUser(''); setSelectedBook('');
@@ -261,7 +264,7 @@ const Issues = () => {
             <label className="block text-sm font-bold mb-2 text-foreground/80">Select Book *</label>
             <select required value={selectedBook} onChange={e => setSelectedBook(e.target.value)} className="input-field">
               <option value="">Choose available book...</option>
-              {books.map(b => (
+              {availableBooks.map(b => (
                 <option key={b.book_id} value={b.book_id}>{b.title} — {b.author} ({b.available_copies} avail.)</option>
               ))}
             </select>

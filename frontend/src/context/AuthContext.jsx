@@ -2,23 +2,29 @@ import { createContext, useState } from 'react';
 
 export const AuthContext = createContext();
 
-// Mock user for UI development - no Supabase required
-const MOCK_USER = {
-  id: 'staff-001',
-  email: 'admin@library.com',
-  user_metadata: { name: 'Admin' }
-};
+// Staff credentials — matches the ER diagram (Staff table: email, password)
+const STAFF_CREDENTIALS = [
+  { staff_id: 'staff-001', email: 'admin@library.com', password: 'admin123', name: 'Admin' },
+  { staff_id: 'staff-002', email: 'librarian@library.com', password: 'lib123', name: 'Librarian' },
+];
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(MOCK_USER); // Auto-logged in for UI dev
+  const [user, setUser] = useState(null); // No auto-login; must authenticate
 
   const signIn = async ({ email, password }) => {
-    // TODO: Replace with real Supabase auth
-    if (email && password) {
-      setUser(MOCK_USER);
+    // Validate credentials against staff table (ER diagram: Staff has email + password)
+    const staff = STAFF_CREDENTIALS.find(
+      s => s.email.toLowerCase() === email.toLowerCase() && s.password === password
+    );
+    if (staff) {
+      setUser({
+        id: staff.staff_id,
+        email: staff.email,
+        user_metadata: { name: staff.name }
+      });
       return { error: null };
     }
-    return { error: { message: 'Invalid credentials' } };
+    return { error: { message: 'Invalid email or password. Please try again.' } };
   };
 
   const signOut = () => {
