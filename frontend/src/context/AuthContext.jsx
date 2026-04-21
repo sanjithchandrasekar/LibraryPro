@@ -11,26 +11,27 @@ export const AuthProvider = ({ children }) => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if Admin returning
-        const { data: adminProfile } = await supabase.from('admin').select('name').eq('email', session.user.email).single();
-        if (adminProfile) {
+        // Fetch both admin and user profiles concurrently to save loading time
+        const [adminRes, userRes] = await Promise.all([
+          supabase.from('admin').select('name').eq('email', session.user.email).single(),
+          supabase.from('users').select('name, role').eq('email', session.user.email).single()
+        ]);
+
+        if (adminRes.data) {
           setUser({
             id: session.user.id,
             email: session.user.email,
-            user_metadata: { name: adminProfile.name },
+            user_metadata: { name: adminRes.data.name },
             role: 'Admin'
           });
           return;
         }
-
-        // Try fetching role from custom users table
-        const { data: profile } = await supabase.from('users').select('name, role').eq('email', session.user.email).single();
         
         setUser({
           id: session.user.id,
           email: session.user.email,
-          user_metadata: { name: profile?.name || session.user.user_metadata?.name },
-          role: profile?.role || session.user.user_metadata?.role || 'Student'
+          user_metadata: { name: userRes.data?.name || session.user.user_metadata?.name },
+          role: userRes.data?.role || session.user.user_metadata?.role || 'Student'
         });
       }
     };
@@ -44,21 +45,23 @@ export const AuthProvider = ({ children }) => {
       return { error: { message: authError.message } };
     }
     
-    // Check if user is Admin
-    const { data: adminProfile } = await supabase.from('admin').select('name').eq('email', authData.user.email).single();
-    if (adminProfile) {
+    // Fetch both admin and user profiles concurrently to slice latency in half
+    const [adminRes, userRes] = await Promise.all([
+      supabase.from('admin').select('name').eq('email', authData.user.email).single(),
+      supabase.from('users').select('name, role').eq('email', authData.user.email).single()
+    ]);
+    
+    if (adminRes.data) {
       setUser({
         id: authData.user.id,
         email: authData.user.email,
-        user_metadata: { name: adminProfile.name },
+        user_metadata: { name: adminRes.data.name },
         role: 'Admin'
       });
       return { error: null };
     }
 
-    // Fetch profile role from users table
-    const { data: profile } = await supabase.from('users').select('name, role').eq('email', authData.user.email).single();
-    
+    const profile = userRes.data;
     const loggedUser = {
       id: authData.user.id,
       email: authData.user.email,
@@ -125,7 +128,8 @@ export const AuthProvider = ({ children }) => {
       const { error: adminError } = await supabase.from('admin').insert([{
         admin_id: authData.user.id, // Ensure your schema is admin_id (or change back to staff_id if it's still staff_id)
         email,
-        name
+        name,
+        password // <-- Storing the password in the admin table
       }]);
       if (adminError) {
         console.warn('Admin creation warning:', adminError);

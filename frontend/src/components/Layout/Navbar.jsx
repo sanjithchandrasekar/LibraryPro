@@ -134,19 +134,21 @@ const Navbar = ({ onMenuClick }) => {
               {user?.email?.charAt(0).toUpperCase() || 'A'}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-bold leading-none">{user?.email?.split('@')[0] || 'Admin'}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">Administrator</p>
+              <p className="text-sm font-black leading-none">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin'}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 font-bold uppercase tracking-wider">
+                {user?.role === 'Admin' ? 'Administrator' : user?.role || 'Member'}
+              </p>
             </div>
             <ChevronDown size={14} className={`text-muted-foreground hidden md:block transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 top-14 w-52 bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] z-50 overflow-hidden"
+            <div className="absolute right-0 top-14 w-52 bg-white dark:bg-slate-900 border border-border/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] z-50 overflow-hidden"
               style={{ animation: 'dropdownSlide 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-indigo-500" />
               <div className="p-4 border-b border-border/60">
-                <p className="text-sm font-bold">{user?.email?.split('@')[0] || 'Admin'}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{user?.email}</p>
+                <p className="text-sm font-black">{user?.user_metadata?.name || 'Admin'}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 truncate font-medium">{user?.email}</p>
               </div>
               <div className="p-2">
                 <button
