@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Users as UsersIcon, ArrowLeftRight,
-  BarChart3, LogOut, BookMarked, ChevronRight, X
+  BarChart3, LogOut, BookMarked, ChevronRight, X, ShieldPlus
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -12,6 +12,7 @@ const adminNav = [
   { title: 'Users', icon: UsersIcon, path: '/users' },
   { title: 'Issues', icon: ArrowLeftRight, path: '/issues' },
   { title: 'Reports', icon: BarChart3, path: '/reports' },
+  { title: 'Create Admin', icon: ShieldPlus, path: '/create-admin' },
 ];
 
 const userNav = [

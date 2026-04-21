@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { BookMarked, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookMarked, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const Login = () => {
@@ -123,19 +123,17 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="mt-10 pt-8 border-t border-border/40">
-              <div className="flex items-center gap-4 p-5 rounded-2xl bg-primary/5 border border-primary/10 group/demo">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform">
-                  <ShieldCheck size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60">Mock Environment - Admin</p>
-                  <p className="text-xs font-black text-foreground truncate">admin@library.com · admin123</p>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-60 mt-2">Mock Environment - Student</p>
-                  <p className="text-xs font-black text-foreground truncate">student@library.com · student123</p>
-                </div>
-              </div>
-            </div>
+            {/* Sign up link */}
+            <p className="mt-8 text-center text-xs font-bold text-muted-foreground">
+              New student?{' '}
+              <Link
+                to="/signup"
+                className="text-primary hover:opacity-70 transition-opacity font-black underline underline-offset-2"
+              >
+                Create an account
+              </Link>
+            </p>
+
           </div>
         </div>
 
