@@ -6,6 +6,9 @@ import {
   User, Phone, GraduationCap, Hash, Calendar, Sparkles
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { format, parseISO } from 'date-fns';
 
 const DEPARTMENTS = [
   'Computer Science & Engineering',
@@ -22,6 +25,22 @@ const DEPARTMENTS = [
   'MCA',
   'Other',
 ];
+
+
+// Defined outside the parent component to prevent remounting on re-render
+const InputWrapper = ({ label, icon: Icon, children }) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1 opacity-70">
+      {label}
+    </label>
+    <div className="relative group/input">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground group-focus-within/input:text-primary transition-colors z-10">
+        <Icon size={16} />
+      </div>
+      {children}
+    </div>
+  </div>
+);
 
 const StudentSignup = () => {
   const [form, setForm] = useState({
@@ -94,20 +113,6 @@ const StudentSignup = () => {
     }
   };
 
-  const InputWrapper = ({ label, icon: Icon, children }) => (
-    <div className="space-y-2">
-      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1 opacity-70">
-        {label}
-      </label>
-      <div className="relative group/input">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground group-focus-within/input:text-primary transition-colors z-10">
-          <Icon size={16} />
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden bg-background">
       {/* Background blobs */}
@@ -158,7 +163,7 @@ const StudentSignup = () => {
                     value={form.rollNo}
                     onChange={handleChange}
                     className="input-field !pl-10 py-3.5"
-                    placeholder="e.g. CS22B001"
+                    placeholder="e.g. 24CSR267"
                     required
                   />
                 </InputWrapper>
@@ -221,15 +226,28 @@ const StudentSignup = () => {
               {/* Row 4: DOB + Year + Gender */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <InputWrapper label="Date of Birth" icon={Calendar}>
-                  <input
-                    type="date"
-                    name="dob"
-                    value={form.dob}
-                    onChange={handleChange}
-                    className="input-field !pl-10 py-3.5"
-                    max={new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                  <div className="w-full relative group/datepicker">
+                    <DatePicker
+                      selected={form.dob ? parseISO(form.dob) : null}
+                      onChange={(date) => {
+                        if (date) {
+                          setForm(prev => ({ ...prev, dob: format(date, 'yyyy-MM-dd') }));
+                          setError('');
+                        } else {
+                          setForm(prev => ({ ...prev, dob: '' }));
+                        }
+                      }}
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      maxDate={new Date()}
+                      className="input-field !pl-10 py-3.5 w-full"
+                      wrapperClassName="w-full"
+                      placeholderText="DD/MM/YYYY"
+                      dateFormat="dd/MM/yyyy"
+                      required
+                    />
+                  </div>
                 </InputWrapper>
 
                 <div className="space-y-2">

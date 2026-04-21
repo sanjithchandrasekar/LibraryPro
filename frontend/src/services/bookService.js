@@ -1,118 +1,76 @@
-import { mockBooks, mockCategories } from './mockData';
-
-// In-memory store so CRUD operations persist during session
-let booksStore = [...mockBooks];
-let categoriesStore = [...mockCategories];
-let idCounter = 100;
-
-const delay = (ms = 300) => new Promise(r => setTimeout(r, ms));
+import { supabase } from './supabaseClient';
 
 export const bookService = {
   getBooks: async (search = '', categoryId = null) => {
-    await delay();
-    let result = [...booksStore];
+    let query = supabase.from('books').select(`*, categories ( category_name )`).order('created_at', { ascending: false });
+
     if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(b =>
-        b.title.toLowerCase().includes(q) ||
-        b.author.toLowerCase().includes(q) ||
-        b.isbn.includes(q)
-      );
+      query = query.or(`title.ilike.%${search}%,author.ilike.%${search}%,isbn.ilike.%${search}%`);
     }
     if (categoryId) {
-      result = result.filter(b => String(b.category_id) === String(categoryId));
+      query = query.eq('category_id', categoryId);
     }
-    return result;
-  },
 
-  // Used by issueService to check and mutate available_copies
-  getBooksStore: () => booksStore,
-
-  // Decrement available_copies when a book is issued (used by issueService)
-  decrementCopies: (bookId) => {
-    const idx = booksStore.findIndex(b => b.book_id === bookId);
-    if (idx !== -1 && booksStore[idx].available_copies > 0) {
-      booksStore[idx] = {
-        ...booksStore[idx],
-        available_copies: booksStore[idx].available_copies - 1
-      };
-      return true;
-    }
-    return false;
-  },
-
-  // Increment available_copies when a book is returned (used by issueService)
-  incrementCopies: (bookId) => {
-    const idx = booksStore.findIndex(b => b.book_id === bookId);
-    if (idx !== -1) {
-      booksStore[idx] = {
-        ...booksStore[idx],
-        available_copies: Math.min(
-          booksStore[idx].available_copies + 1,
-          booksStore[idx].total_copies
-        )
-      };
-    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
   },
 
   getCategories: async () => {
-    await delay(100);
-    return [...categoriesStore];
+    const { data, error } = await supabase.from('categories').select('*').order('category_name', { ascending: true });
+    if (error) throw error;
+    return data;
   },
 
   addBook: async (book) => {
-    await delay();
-    const newBook = {
-      ...book,
-      book_id: `b${++idCounter}`,
-      available_copies: parseInt(book.total_copies),
-      total_copies: parseInt(book.total_copies),
+    const newBookReq = {
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn,
       category_id: parseInt(book.category_id),
-      categories: { category_name: categoriesStore.find(c => c.category_id === parseInt(book.category_id))?.category_name || 'Unknown' },
-      created_at: new Date().toISOString()
+      total_copies: parseInt(book.total_copies),
+      available_copies: parseInt(book.total_copies), // initially available copies = total
     };
-    booksStore.unshift(newBook);
-    return newBook;
+    const { data, error } = await supabase.from('books').insert([newBookReq]).select().single();
+    if (error) throw error;
+    return data;
   },
 
   updateBook: async (id, updates) => {
-    await delay();
-    const idx = booksStore.findIndex(b => b.book_id === id);
-    if (idx === -1) throw new Error('Book not found');
-    const category = categoriesStore.find(c => c.category_id === parseInt(updates.category_id));
-    // Preserve current available_copies ratio when total_copies changes
-    const oldTotal = booksStore[idx].total_copies;
-    const oldAvail = booksStore[idx].available_copies;
-    const newTotal = parseInt(updates.total_copies);
+    // We need current book data first to properly adjust available copies ratio if total changes
+    const { data: oldBook, error: fetchError } = await supabase.from('books').select('*').eq('book_id', id).single();
+    if (fetchError) throw fetchError;
+
+    const oldTotal = oldBook.total_copies;
+    const oldAvail = oldBook.available_copies;
+    const newTotal = updates.total_copies ? parseInt(updates.total_copies) : oldTotal;
     const issued = oldTotal - oldAvail;
     const newAvail = Math.max(0, newTotal - issued);
-    booksStore[idx] = {
-      ...booksStore[idx],
+
+    const updatedData = {
       ...updates,
-      category_id: parseInt(updates.category_id),
+      category_id: updates.category_id ? parseInt(updates.category_id) : oldBook.category_id,
       total_copies: newTotal,
-      available_copies: newAvail,
-      categories: { category_name: category?.category_name || 'Unknown' }
+      available_copies: newAvail
     };
-    return booksStore[idx];
+
+    const { data, error } = await supabase.from('books').update(updatedData).eq('book_id', id).select().single();
+    if (error) throw error;
+    return data;
   },
 
   deleteBook: async (id) => {
-    await delay();
-    // Check if book has active issues before deletion
-    const { issueService } = await import('./issueService');
-    const activeIssues = await issueService.getIssues('Issued');
-    if (activeIssues.some(i => i.book_id === id)) {
-      throw new Error('Cannot delete book with active issues. Please wait for all copies to be returned.');
-    }
-    booksStore = booksStore.filter(b => b.book_id !== id);
+    const { error } = await supabase.from('books').delete().eq('book_id', id);
+    if (error) throw error;
   },
 
-  // Get live stats for Dashboard (dynamically calculated)
-  getBookStats: () => {
-    const totalBooks = booksStore.length;
-    const availableBooks = booksStore.reduce((sum, b) => sum + b.available_copies, 0);
-    const totalCopies = booksStore.reduce((sum, b) => sum + b.total_copies, 0);
-    return { totalBooks, availableBooks, totalCopies };
+  getBookStats: async () => {
+    const { data, error } = await supabase.from('books').select('available_copies, total_copies');
+    if (error) throw error;
+    
+    const availableBooks = data.reduce((sum, b) => sum + b.available_copies, 0);
+    const totalCopies = data.reduce((sum, b) => sum + b.total_copies, 0);
+    
+    return { totalBooks: data.length, availableBooks, totalCopies };
   }
 };

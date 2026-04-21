@@ -1,99 +1,141 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
+import { supabase } from '../services/supabaseClient';
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
 
-const STAFF_CREDENTIALS = [
-  { staff_id: 'staff-001', email: 'admin@library.com', password: 'admin123', name: 'Admin' },
-  { staff_id: 'staff-002', email: 'librarian@library.com', password: 'lib123', name: 'Librarian' },
-];
-
-// In-memory student store; registered students get appended here at runtime
-const STUDENT_CREDENTIALS = [
-  { user_id: 'u1', email: 'alice@university.edu', password: 'student123', name: 'Alice Johnson', role: 'Student', rollNo: 'CS20B001', department: 'Computer Science & Engineering' },
-  { user_id: 'u2', email: 'bob@university.edu', password: 'student123', name: 'Bob Smith', role: 'Faculty', rollNo: 'IT20B002', department: 'Information Technology' },
-];
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // No auto-login; must authenticate
+  const [user, setUser] = useState(null);
+  
+  // Optional: check session on load
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Check if Admin returning
+        const { data: adminProfile } = await supabase.from('admin').select('name').eq('email', session.user.email).single();
+        if (adminProfile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email,
+            user_metadata: { name: adminProfile.name },
+            role: 'Admin'
+          });
+          return;
+        }
+
+        // Try fetching role from custom users table
+        const { data: profile } = await supabase.from('users').select('name, role').eq('email', session.user.email).single();
+        
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          user_metadata: { name: profile?.name || session.user.user_metadata?.name },
+          role: profile?.role || session.user.user_metadata?.role || 'Student'
+        });
+      }
+    };
+    checkSession();
+  }, []);
 
   const signIn = async ({ email, password }) => {
-    // Validate credentials against staff table (ER diagram: Staff has email + password)
-    const staff = STAFF_CREDENTIALS.find(
-      s => s.email.toLowerCase() === email.toLowerCase() && s.password === password
-    );
-    if (staff) {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (authError) {
+      return { error: { message: authError.message } };
+    }
+    
+    // Check if user is Admin
+    const { data: adminProfile } = await supabase.from('admin').select('name').eq('email', authData.user.email).single();
+    if (adminProfile) {
       setUser({
-        id: staff.staff_id,
-        email: staff.email,
-        user_metadata: { name: staff.name },
+        id: authData.user.id,
+        email: authData.user.email,
+        user_metadata: { name: adminProfile.name },
         role: 'Admin'
       });
       return { error: null };
     }
+
+    // Fetch profile role from users table
+    const { data: profile } = await supabase.from('users').select('name, role').eq('email', authData.user.email).single();
     
-    // Validate against student/user credentials
-    const student = STUDENT_CREDENTIALS.find(
-      s => s.email.toLowerCase() === email.toLowerCase() && s.password === password
-    );
-    if (student) {
-      setUser({
-        id: student.user_id,
-        email: student.email,
-        user_metadata: { name: student.name },
-        role: student.role
-      });
-      return { error: null };
-    }
-    return { error: { message: 'Invalid email or password. Please try again.' } };
+    const loggedUser = {
+      id: authData.user.id,
+      email: authData.user.email,
+      user_metadata: { name: profile?.name || authData.user.user_metadata?.name },
+      role: profile?.role || authData.user.user_metadata?.role || 'Student'
+    };
+    
+    setUser(loggedUser);
+    return { error: null };
   };
 
   const signUp = async ({ email, password, name, rollNo, phone, department, dob, year, gender }) => {
-    // Check for duplicate email
-    const allEmails = [
-      ...STAFF_CREDENTIALS.map(s => s.email.toLowerCase()),
-      ...STUDENT_CREDENTIALS.map(s => s.email.toLowerCase()),
-    ];
-    if (allEmails.includes(email.toLowerCase())) {
-      return { error: { message: 'An account with this email already exists.' } };
-    }
-    // Register new student
-    const newStudent = {
-      user_id: `u-${Date.now()}`,
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      name,
-      rollNo,
-      phone,
-      department,
-      dob,
-      year,
-      gender,
-      role: 'Student',
-    };
-    STUDENT_CREDENTIALS.push(newStudent);
+      options: {
+        data: { name, role: 'Student' } // storing in auth metadata as fallback
+      }
+    });
+
+    if (authError) {
+      return { error: { message: authError.message } };
+    }
+    
+    // Insert into custom users table according to YOUR specific schema
+    if (authData.user) {
+      const { error: profileError } = await supabase.from('users').insert([{
+        user_id: authData.user.id,
+        email: email,
+        name: name,
+        password: password, // <-- Now storing the password in the table
+        role: 'Student', 
+        phone: phone || null,
+        department: department || null,
+        roll_no: rollNo || null,
+        dob: dob || null,
+        year: year || null,
+        gender: gender || null
+      }]);
+      
+      if (profileError) {
+        console.error('Profile creation error details:', profileError);
+        return { error: { message: `Database error: ${profileError.message || profileError.details}` } };
+      }
+    }
     return { error: null };
   };
 
   const addAdmin = async ({ name, email, password }) => {
-    const allEmails = [
-      ...STAFF_CREDENTIALS.map(s => s.email.toLowerCase()),
-      ...STUDENT_CREDENTIALS.map(s => s.email.toLowerCase()),
-    ];
-    if (allEmails.includes(email.toLowerCase())) {
-      return { error: { message: 'An account with this email already exists.' } };
-    }
-    const newStaff = {
-      staff_id: `staff-${Date.now()}`,
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      name,
-    };
-    STAFF_CREDENTIALS.push(newStaff);
+      options: {
+        data: { name, role: 'Admin' }
+      }
+    });
+
+    if (authError) {
+      return { error: { message: authError.message } };
+    }
+
+    // Insert into 'admin' table
+    if (authData.user) {
+      const { error: adminError } = await supabase.from('admin').insert([{
+        admin_id: authData.user.id, // Ensure your schema is admin_id (or change back to staff_id if it's still staff_id)
+        email,
+        name
+      }]);
+      if (adminError) {
+        console.warn('Admin creation warning:', adminError);
+      }
+    }
     return { error: null };
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 

@@ -1,54 +1,49 @@
-import { mockUsers } from './mockData';
-
-let usersStore = [...mockUsers];
-let idCounter = 200;
-
-const delay = (ms = 300) => new Promise(r => setTimeout(r, ms));
+import { supabase } from './supabaseClient';
 
 export const userService = {
   getUsers: async (search = '') => {
-    await delay();
-    let result = [...usersStore];
+    let query = supabase.from('users').select('*').order('created_at', { ascending: false });
+    
     if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(u =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.department.toLowerCase().includes(q)
-      );
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,department.ilike.%${search}%`);
     }
-    return result;
-  },
 
-  addUser: async (user) => {
-    await delay();
-    const newUser = {
-      ...user,
-      user_id: `u${++idCounter}`,
-      created_at: new Date().toISOString()
-    };
-    usersStore.unshift(newUser);
-    return newUser;
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
   },
 
   updateUser: async (id, updates) => {
-    await delay();
-    const idx = usersStore.findIndex(u => u.user_id === id);
-    if (idx === -1) throw new Error('User not found');
-    usersStore[idx] = { ...usersStore[idx], ...updates };
-    return usersStore[idx];
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('user_id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
   },
 
   deleteUser: async (id) => {
-    await delay();
-    usersStore = usersStore.filter(u => u.user_id !== id);
+    // Note: Depends on RLS policies and FK cascades. 
+    // Usually deleting from auth.users via edge function is required to fully delete auth records.
+    // For now we just delete from public.users
+    const { error } = await supabase.from('users').delete().eq('user_id', id);
+    if (error) throw error;
   },
 
   getUserHistory: async (userId) => {
-    await delay();
-    // Get live issue history from issueService instead of stale mockData
-    const { issueService } = await import('./issueService');
-    const allIssues = await issueService.getIssues();
-    return allIssues.filter(i => i.user_id === userId);
+    const { data, error } = await supabase
+      .from('issues')
+      .select(`
+        *,
+        books ( title )
+      `)
+      .eq('user_id', userId)
+      .order('issue_date', { ascending: false });
+
+    if (error) throw error;
+    return data;
   }
 };
