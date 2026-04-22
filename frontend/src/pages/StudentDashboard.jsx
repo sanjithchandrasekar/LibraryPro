@@ -92,7 +92,7 @@ const StudentDashboard = () => {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">{today}</p>
           <h1 className="text-4xl font-black tracking-tight text-foreground">
-            {greeting}, <span className="text-primary">{userName}</span> 👋
+            {greeting}, <span className="text-primary">{userName}</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-sm font-medium opacity-80">Welcome to your library dashboard.</p>
         </div>

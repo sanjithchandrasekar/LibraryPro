@@ -174,29 +174,31 @@ const Users = () => {
           {users.map((user, idx) => (
             <div key={user.user_id} className="bg-card border border-border rounded-[2rem] p-7 card-hover shadow-sm group relative overflow-hidden">
               <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${avatarGradients[idx % avatarGradients.length]} flex items-center justify-center font-black text-xl text-white shadow-xl`}>
+                <div className="flex items-center gap-3">
+                  <div className={`shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarGradients[idx % avatarGradients.length]} flex items-center justify-center font-black text-xl text-white shadow-xl`}>
                     {user.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-black text-lg text-foreground leading-tight">{user.name}</p>
-                    <RoleBadge role={user.role} />
+                    <p className="font-black text-lg text-foreground leading-tight tracking-tight">{user.name}</p>
+                    <div className="mt-1"><RoleBadge role={user.role} /></div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <button onClick={() => openHistory(user)} className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground" title="History"><History size={16} /></button>
-                  <button onClick={() => openEdit(user)} className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground" title="Edit"><Edit2 size={16} /></button>
-                  <button onClick={() => handleDelete(user.user_id)} disabled={deleting === user.user_id} className="p-2.5 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0" title="Remove">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <button onClick={() => openHistory(user)} className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground" title="History"><History size={16} /></button>
+                  <button onClick={() => openEdit(user)} className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground" title="Edit"><Edit2 size={16} /></button>
+                  <button onClick={() => handleDelete(user.user_id)} disabled={deleting === user.user_id} className="p-1.5 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0" title="Remove">
                     {deleting === user.user_id ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full spin" /> : <Trash2 size={16} />}
                   </button>
                 </div>
               </div>
               <div className="space-y-2.5">
-                <div className="flex items-center gap-2.5 text-xs font-bold text-muted-foreground">
-                  <Mail size={14} className="text-indigo-400" /> {user.email}
+                <div className="flex items-center gap-2.5 text-xs font-bold text-muted-foreground min-w-0">
+                  <Mail size={14} className="text-indigo-400 shrink-0" />
+                  <span className="truncate">{user.email}</span>
                 </div>
-                <div className="flex items-center gap-2.5 text-xs font-bold text-muted-foreground">
-                  <Building2 size={14} className="text-indigo-400" /> {user.department}
+                <div className="flex items-center gap-2.5 text-xs font-bold text-muted-foreground min-w-0">
+                  <Building2 size={14} className="text-indigo-400 shrink-0" />
+                  <span className="truncate">{user.department}</span>
                 </div>
               </div>
             </div>

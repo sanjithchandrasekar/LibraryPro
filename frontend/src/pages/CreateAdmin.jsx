@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 // ─── SECRET MANAGEMENT KEY ────────────────────────────────────────────────────
 // This key must be shared only with authorized management personnel.
 // Change this value to rotate the key.
-const MANAGEMENT_SECRET_KEY = 'LIB-MGMT-2026';
+const MANAGEMENT_SECRET_KEY = 'library-pro-dbms';
 
 const CreateAdmin = () => {
   const [form, setForm] = useState({

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Users as UsersIcon, ArrowLeftRight,
-  BarChart3, LogOut, BookMarked, ChevronRight, X, ShieldPlus
+  BarChart3, BookMarked, ChevronRight, X, ShieldPlus
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -21,12 +21,12 @@ const userNav = [
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const avatarChar = user?.email?.charAt(0).toUpperCase() || 'A';
 
   return (
     <aside 
-      className={`fixed lg:sticky top-0 left-0 h-screen w-72 bg-white dark:bg-slate-950 border-r border-border flex flex-col z-50 transition-transform duration-300
+      className={`fixed lg:sticky top-0 left-0 h-[100dvh] w-72 bg-white dark:bg-slate-950 border-r border-border flex flex-col z-50 transition-transform duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}
     >
@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       </div>
 
       {/* Nav Menu */}
-      <nav className="flex-1 px-4 py-8 space-y-1.5">
+      <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pl-4 mb-4">Main Menu</p>
         {(user?.role === 'Admin' ? adminNav : userNav).map((item) => {
           const Icon = item.icon;
@@ -71,7 +71,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         })}
       </nav>
 
-      {/* User Card & Sign Out */}
+      {/* User Card */}
       <div className="px-4 pb-8 space-y-3">
         <div className="bg-muted/40 rounded-[2rem] p-4 flex items-center gap-3.5 border border-border/50">
           <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black text-sm shadow-md">
@@ -82,13 +82,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{user?.role === 'Admin' ? 'Administrator' : user?.role || 'User'}</p>
           </div>
         </div>
-        <button
-          onClick={signOut}
-          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-[1.5rem] text-sm font-bold text-muted-foreground hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-all"
-        >
-          <LogOut size={18} />
-          Sign Out
-        </button>
       </div>
     </aside>
   );

@@ -104,7 +104,7 @@ const Dashboard = () => {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">{today}</p>
           <h1 className="text-4xl font-black tracking-tight text-foreground">
-            {greeting}, <span className="text-primary">{adminName}</span> 👋
+            {greeting}, <span className="text-primary">{adminName}</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-sm font-medium opacity-80">Here's what's happening at the library today.</p>
         </div>

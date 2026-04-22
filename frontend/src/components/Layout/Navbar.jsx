@@ -1,8 +1,9 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Bell, ChevronDown, Menu, Sparkles } from 'lucide-react';
+import { Sun, Moon, Bell, ChevronDown, Menu, Sparkles, X } from 'lucide-react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { notificationService } from '../../services/notificationService';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -20,18 +21,15 @@ const pageSubtitles = {
   '/reports': 'View analytics, fine reports, and export data.',
 };
 
-const notifications = [
-  { text: 'Sapiens is overdue (Carol White)', time: '2 days ago', dot: 'bg-red-500', type: 'overdue' },
-  { text: 'Clean Code due today (Alice Johnson)', time: 'Today', dot: 'bg-amber-500', type: 'warning' },
-  { text: 'New user registered: David Brown', time: 'Yesterday', dot: 'bg-violet-500', type: 'info' },
-];
-
 const Navbar = ({ onMenuClick }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(true);
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -46,6 +44,43 @@ const Navbar = ({ onMenuClick }) => {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoadingNotifs(true);
+      const data = await notificationService.getNotifications();
+      setNotifications(data);
+      setLoadingNotifs(false);
+    };
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (notifOpen) {
+      const fetchNotifications = async () => {
+        const data = await notificationService.getNotifications();
+        setNotifications(data);
+      };
+      fetchNotifications();
+    }
+  }, [notifOpen]);
+
+  const handleNotificationClick = (type) => {
+    setNotifOpen(false);
+    if (type === 'overdue' || type === 'warning') navigate('/issues');
+    if (type === 'info') navigate('/users');
+  };
+
+  const handleDismiss = (e, id) => {
+    e.stopPropagation();
+    notificationService.dismissNotification(id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleDismissAll = () => {
+    notificationService.dismissAll(notifications);
+    setNotifications([]);
+  };
 
   return (
     <header className="h-auto min-h-[72px] bg-card/80 backdrop-blur-xl border-b border-border/60 sticky top-0 z-30 px-5 sm:px-8 flex items-center justify-between gap-4 shadow-[0_1px_20px_rgba(0,0,0,0.04)]">
@@ -86,7 +121,9 @@ const Navbar = ({ onMenuClick }) => {
             className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all hover:scale-110 active:scale-95 relative"
           >
             <Bell size={18} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-gradient-to-r from-red-500 to-rose-400 rounded-full border-2 border-card shadow-sm shadow-red-500/50 animate-pulse" />
+            {notifications.length > 0 && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-gradient-to-r from-red-500 to-rose-400 rounded-full border-2 border-card shadow-sm shadow-red-500/50 animate-pulse" />
+            )}
           </button>
 
           {notifOpen && (
@@ -98,24 +135,52 @@ const Navbar = ({ onMenuClick }) => {
                   <Bell size={15} className="text-primary" />
                   <span className="font-bold text-sm">Notifications</span>
                 </div>
-                <span className="badge bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">2 new</span>
+                {notifications.length > 0 && (
+                  <span className="badge bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">{notifications.length} new</span>
+                )}
               </div>
               <div className="max-h-72 overflow-y-auto divide-y divide-border/50">
-                {notifications.map((n, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className={`w-2.5 h-2.5 rounded-full ${n.dot} mt-1.5 shrink-0 shadow-sm`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">{n.text}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 font-medium">{n.time}</p>
-                    </div>
+                {loadingNotifs && notifications.length === 0 ? (
+                  <div className="p-8 flex justify-center items-center">
+                    <span className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
                   </div>
-                ))}
+                ) : notifications.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm font-medium">
+                    No new notifications
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div 
+                      key={n.id} 
+                      onClick={() => handleNotificationClick(n.type)}
+                      className="flex items-start gap-3 p-4 hover:bg-muted/50 transition-colors cursor-pointer group relative"
+                    >
+                      <div className={`w-2.5 h-2.5 rounded-full ${n.dot} mt-1.5 shrink-0 shadow-sm`} />
+                      <div className="flex-1 min-w-0 pr-6">
+                        <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">{n.text}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 font-medium">{n.time}</p>
+                      </div>
+                      <button 
+                        onClick={(e) => handleDismiss(e, n.id)} 
+                        className="absolute right-4 top-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Dismiss"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="p-3 border-t border-border/60">
-                <button className="w-full text-center text-xs font-bold text-primary hover:text-primary/70 transition-colors py-1">
-                  View all notifications →
-                </button>
-              </div>
+              {notifications.length > 0 && (
+                <div className="p-3 border-t border-border/60">
+                  <button 
+                    onClick={handleDismissAll}
+                    className="w-full text-center text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-1"
+                  >
+                    Dismiss all notifications
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

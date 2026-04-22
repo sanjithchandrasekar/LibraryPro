@@ -3,97 +3,107 @@ import { supabase } from '../services/supabaseClient';
 
 export const AuthContext = createContext();
 
+// Build a user object from Supabase session + optional DB profile
+const buildUser = (authUser, profile = null) => ({
+  id: authUser.id,
+  email: authUser.email,
+  user_metadata: {
+    name:
+      profile?.name ||
+      authUser.user_metadata?.name ||
+      authUser.email?.split('@')[0],
+  },
+  role:
+    profile?.role ||
+    authUser.user_metadata?.role ||
+    'Student',
+});
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  
-  // Optional: check session on load
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Fetch both admin and user profiles concurrently to save loading time
-        const [adminRes, userRes] = await Promise.all([
-          supabase.from('admin').select('name').eq('email', session.user.email).single(),
-          supabase.from('users').select('name, role').eq('email', session.user.email).single()
-        ]);
+  const [loading, setLoading] = useState(true);
 
-        if (adminRes.data) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email,
-            user_metadata: { name: adminRes.data.name },
-            role: 'Admin'
-          });
-          return;
+  useEffect(() => {
+    // Restore session on mount — use metadata first, DB only as fallback
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const meta = session.user.user_metadata || {};
+          // If role is already in metadata (set during signup), skip DB queries
+          if (meta.role) {
+            setUser(buildUser(session.user));
+          } else {
+            // Legacy accounts: fetch from DB once
+            const [adminRes, userRes] = await Promise.all([
+              supabase.from('admin').select('name').eq('email', session.user.email).maybeSingle(),
+              supabase.from('users').select('name, role').eq('email', session.user.email).maybeSingle()
+            ]);
+            setUser(buildUser(session.user, adminRes.data || userRes.data));
+          }
         }
-        
-        setUser({
-          id: session.user.id,
-          email: session.user.email,
-          user_metadata: { name: userRes.data?.name || session.user.user_metadata?.name },
-          role: userRes.data?.role || session.user.user_metadata?.role || 'Student'
-        });
+      } finally {
+        setLoading(false);
       }
     };
+
     checkSession();
+
+    // Keep session in sync across tabs
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async ({ email, password }) => {
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    
     if (authError) {
       return { error: { message: authError.message } };
     }
-    
-    // Fetch both admin and user profiles concurrently to slice latency in half
-    const [adminRes, userRes] = await Promise.all([
-      supabase.from('admin').select('name').eq('email', authData.user.email).single(),
-      supabase.from('users').select('name, role').eq('email', authData.user.email).single()
-    ]);
-    
-    if (adminRes.data) {
-      setUser({
-        id: authData.user.id,
-        email: authData.user.email,
-        user_metadata: { name: adminRes.data.name },
-        role: 'Admin'
-      });
+
+    const meta = authData.user.user_metadata || {};
+
+    if (meta.role) {
+      // Fast path: role already baked into metadata — no extra DB call needed
+      setUser(buildUser(authData.user));
       return { error: null };
     }
 
-    const profile = userRes.data;
-    const loggedUser = {
-      id: authData.user.id,
-      email: authData.user.email,
-      user_metadata: { name: profile?.name || authData.user.user_metadata?.name },
-      role: profile?.role || authData.user.user_metadata?.role || 'Student'
-    };
-    
-    setUser(loggedUser);
+    // Fallback for legacy accounts without metadata
+    const [adminRes, userRes] = await Promise.all([
+      supabase.from('admin').select('name').eq('email', authData.user.email).maybeSingle(),
+      supabase.from('users').select('name, role').eq('email', authData.user.email).maybeSingle()
+    ]);
+
+    setUser(buildUser(authData.user, adminRes.data || userRes.data));
     return { error: null };
   };
 
   const signUp = async ({ email, password, name, rollNo, phone, department, dob, year, gender }) => {
+    // Bake name & role into Supabase auth metadata so future logins skip DB queries
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, role: 'Student' } // storing in auth metadata as fallback
+        data: { name, role: 'Student' }
       }
     });
 
     if (authError) {
       return { error: { message: authError.message } };
     }
-    
-    // Insert into custom users table according to YOUR specific schema
+
     if (authData.user) {
       const { error: profileError } = await supabase.from('users').insert([{
         user_id: authData.user.id,
-        email: email,
-        name: name,
-        password: password, // <-- Now storing the password in the table
-        role: 'Student', 
+        email,
+        name,
+        password, // stored for legacy admin lookup
+        role: 'Student',
         phone: phone || null,
         department: department || null,
         roll_no: rollNo || null,
@@ -101,7 +111,7 @@ export const AuthProvider = ({ children }) => {
         year: year || null,
         gender: gender || null
       }]);
-      
+
       if (profileError) {
         console.error('Profile creation error details:', profileError);
         return { error: { message: `Database error: ${profileError.message || profileError.details}` } };
@@ -111,6 +121,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const addAdmin = async ({ name, email, password }) => {
+    // Bake name & role into metadata so admin logins skip DB queries too
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -123,16 +134,17 @@ export const AuthProvider = ({ children }) => {
       return { error: { message: authError.message } };
     }
 
-    // Insert into 'admin' table
     if (authData.user) {
       const { error: adminError } = await supabase.from('admin').insert([{
-        admin_id: authData.user.id, // Ensure your schema is admin_id (or change back to staff_id if it's still staff_id)
+        admin_id: authData.user.id,
         email,
         name,
-        password // <-- Storing the password in the admin table
+        password
       }]);
+
       if (adminError) {
-        console.warn('Admin creation warning:', adminError);
+        console.error('Admin creation database error:', adminError);
+        return { error: { message: `Database Error: ${adminError.message}` } };
       }
     }
     return { error: null };
@@ -143,7 +155,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const value = { user, signIn, signUp, addAdmin, signOut };
+  const value = { user, loading, signIn, signUp, addAdmin, signOut };
 
   return (
     <AuthContext.Provider value={value}>

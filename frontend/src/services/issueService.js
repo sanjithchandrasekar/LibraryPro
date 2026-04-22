@@ -104,17 +104,20 @@ export const issueService = {
   getStats: async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    const { data: issuesData, error: issuesError } = await supabase.from('issues').select('status, due_date').eq('status', 'Issued');
-    if (issuesError) throw issuesError;
-    
+    // Run both queries in true parallel — was sequential before (bookService call blocked on issues)
+    const [issuesResult, bookStats] = await Promise.all([
+      supabase.from('issues').select('status, due_date').eq('status', 'Issued'),
+      bookService.getBookStats()
+    ]);
+
+    if (issuesResult.error) throw issuesResult.error;
+    const issuesData = issuesResult.data;
     const overdue = issuesData.filter(i => new Date(i.due_date) < new Date(today));
 
-    const { totalBooks, availableBooks } = await bookService.getBookStats();
-
     return {
-      totalBooks,
+      totalBooks: bookStats.totalBooks,
       issuedBooks: issuesData.length,
-      availableBooks,
+      availableBooks: bookStats.availableBooks,
       overdueBooks: overdue.length
     };
   },
