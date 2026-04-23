@@ -5,7 +5,7 @@ import { BtnSpinner } from '../components/common/Loader';
 import { useAuth } from '../hooks/useAuth';
 import {
   AlertTriangle, CheckCircle2,
-  Clock, Book, CalendarDays, ArrowLeftRight, RotateCcw
+  Clock, Book, CalendarDays, ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { format, differenceInDays } from 'date-fns';
@@ -42,7 +42,6 @@ const Issues = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [returning, setReturning] = useState(null);
 
   const loadAll = async () => {
     setLoading(true);
@@ -56,16 +55,6 @@ const Issues = () => {
     }
   };
 
-  const handleReturn = async (issueId) => {
-    setReturning(issueId);
-    try {
-      const { fine } = await issueService.returnBook(issueId);
-      if (fine > 0) toast.warning(`Book returned. Fine of ₹${fine} applied.`);
-      else toast.success('Book marked as returned!');
-      await loadAll();
-    } catch { toast.error('Failed to return book'); }
-    finally { setReturning(null); }
-  };
 
   useEffect(() => { loadAll(); }, []);
 
@@ -139,7 +128,6 @@ const Issues = () => {
                   <th className="table-header text-left">Book</th>
                   <th className="table-header text-left">Timeline</th>
                   <th className="table-header text-left">Status</th>
-                  {user?.role === 'Admin' && <th className="table-header text-right">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -194,20 +182,6 @@ const Issues = () => {
                       </div>
                     </td>
                     <td className="table-cell"><StatusBadge issue={h} /></td>
-                    {user?.role === 'Admin' && (
-                      <td className="table-cell text-right">
-                        {h.status !== 'Returned' && (
-                          <button
-                            onClick={() => handleReturn(h.issue_id)}
-                            disabled={returning === h.issue_id}
-                            className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold border border-emerald-200/50 hover:bg-emerald-100 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-                          >
-                            {returning === h.issue_id ? <BtnSpinner light={false} /> : <RotateCcw size={13} />}
-                            {returning === h.issue_id ? '' : 'Return'}
-                          </button>
-                        )}
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

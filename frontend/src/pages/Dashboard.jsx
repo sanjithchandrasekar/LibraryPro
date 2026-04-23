@@ -66,17 +66,23 @@ const Dashboard = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [s, w, c, allIssues] = await Promise.all([
-      issueService.getStats(),
-      issueService.getWeeklyData(),
-      issueService.getCategoryData(),
-      issueService.getIssues(),
-    ]);
-    setStats(s);
-    setWeekly(w);
-    setCatData(c);
-    setRecentIssues(allIssues.slice(0, 5));
-    setLoading(false);
+    try {
+      const [s, w, c, allIssues] = await Promise.all([
+        issueService.getStats(),
+        issueService.getWeeklyData(),
+        issueService.getCategoryData(),
+        issueService.getIssues(),
+      ]);
+      setStats(s);
+      setWeekly(w);
+      setCatData(c);
+      setRecentIssues(allIssues.slice(0, 5));
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+      toast.error('Failed to update dashboard data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { 
