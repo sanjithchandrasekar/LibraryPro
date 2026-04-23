@@ -9,6 +9,7 @@ import {
   BookOpen, ChevronLeft, ChevronRight, Library
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BtnSpinner } from '../components/common/Loader';
 
 const PAGE_SIZE = 8;
 
@@ -263,7 +264,7 @@ const Books = () => {
                             title="Delete book"
                           >
                             {deleting === book.book_id
-                              ? <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full spin" />
+                              ? <BtnSpinner light={false} />
                               : <Trash2 size={16} />}
                           </button>
                         </div>
@@ -276,8 +277,8 @@ const Books = () => {
                           className="btn-primary py-1.5 px-4 text-xs shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
                         >
                           {borrowing === book.book_id ? (
-                            <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full spin" />
-                          ) : 'Borrow'}
+                            <BtnSpinner />
+                          ) : book.available_copies <= 0 ? 'Unavailable' : 'Borrow'}
                         </button>
                       </td>
                     )}
@@ -365,7 +366,7 @@ const Books = () => {
             </button>
             <button type="submit" disabled={submitting} className="flex-1 btn-primary justify-center py-3">
               {submitting
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spin" />
+                ? <BtnSpinner />
                 : editingBook ? '✓ Save Changes' : '+ Add Book'}
             </button>
           </div>

@@ -5,6 +5,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/notificationService';
 
+const SUPER_ADMIN_EMAIL = 'sanjithchandrasekar03@gmail.com';
+
 const pageTitles = {
   '/': 'Dashboard',
   '/books': 'Book Management',
@@ -201,7 +203,7 @@ const Navbar = ({ onMenuClick }) => {
             <div className="hidden md:block text-left">
               <p className="text-sm font-black leading-none">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin'}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5 font-bold uppercase tracking-wider">
-                {user?.role === 'Admin' ? 'Administrator' : user?.role || 'Member'}
+                {user?.email === SUPER_ADMIN_EMAIL ? 'Super Administrator' : user?.role === 'Admin' ? 'Administrator' : user?.role || 'Member'}
               </p>
             </div>
             <ChevronDown size={14} className={`text-muted-foreground hidden md:block transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />

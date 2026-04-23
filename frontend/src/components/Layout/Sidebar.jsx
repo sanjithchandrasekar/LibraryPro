@@ -2,9 +2,12 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, Users as UsersIcon, ArrowLeftRight,
-  BarChart3, BookMarked, ChevronRight, X, ShieldPlus
+  BarChart3, BookMarked, ChevronRight, X, ShieldPlus, Lock
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+
+// Must match the value in CreateAdmin.jsx
+const SUPER_ADMIN_EMAIL = 'sanjithchandrasekar03@gmail.com';
 
 const adminNav = [
   { title: 'Dashboard', icon: LayoutDashboard, path: '/', end: true },
@@ -12,7 +15,7 @@ const adminNav = [
   { title: 'Users', icon: UsersIcon, path: '/users' },
   { title: 'Issues', icon: ArrowLeftRight, path: '/issues' },
   { title: 'Reports', icon: BarChart3, path: '/reports' },
-  { title: 'Create Admin', icon: ShieldPlus, path: '/create-admin' },
+  { title: 'Create Admin', icon: ShieldPlus, path: '/create-admin', superAdminOnly: true },
 ];
 
 const userNav = [
@@ -23,6 +26,7 @@ const userNav = [
 const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const avatarChar = user?.email?.charAt(0).toUpperCase() || 'A';
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   return (
     <aside 
@@ -49,6 +53,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pl-4 mb-4">Main Menu</p>
         {(user?.role === 'Admin' ? adminNav : userNav).map((item) => {
           const Icon = item.icon;
+          const isLocked = item.superAdminOnly && !isSuperAdmin;
+
           return (
             <NavLink
               key={item.path}
@@ -57,15 +63,20 @@ const Sidebar = ({ isOpen, onClose }) => {
               onClick={() => { if (window.innerWidth < 1024) onClose(); }}
               className={({ isActive }) =>
                 `group flex items-center gap-4 px-4 py-3.5 rounded-[1.5rem] transition-all duration-200 font-bold text-sm
-                ${isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                ${isLocked
+                  ? 'text-muted-foreground/50 hover:bg-red-500/5 hover:text-red-400'
+                  : isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`
               }
             >
               <Icon size={20} />
-              <span className="tracking-wide">{item.title}</span>
-              <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-40 transition-opacity" />
+              <span className="tracking-wide flex-1">{item.title}</span>
+              {isLocked
+                ? <Lock size={13} className="ml-auto opacity-50" />
+                : <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-40 transition-opacity" />
+              }
             </NavLink>
           );
         })}
@@ -79,7 +90,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-black text-foreground truncate">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}</p>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{user?.role === 'Admin' ? 'Administrator' : user?.role || 'User'}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              {isSuperAdmin ? 'Super Administrator' : user?.role === 'Admin' ? 'Administrator' : user?.role || 'User'}
+            </p>
           </div>
         </div>
       </div>

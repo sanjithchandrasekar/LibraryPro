@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
   ShieldCheck, User, Mail, Lock, Eye, EyeOff,
-  KeyRound, ArrowRight, CheckCircle2, AlertCircle
+  KeyRound, ArrowRight, CheckCircle2, AlertCircle, ArrowLeft, ShieldX
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BtnSpinner } from '../components/common/Loader';
+
+// ─── SUPER ADMIN ──────────────────────────────────────────────────────────────
+// Only this email address is allowed to create new admin accounts.
+const SUPER_ADMIN_EMAIL = 'sanjithchandrasekar03@gmail.com';
 
 // ─── SECRET MANAGEMENT KEY ────────────────────────────────────────────────────
-// This key must be shared only with authorized management personnel.
-// Change this value to rotate the key.
 const MANAGEMENT_SECRET_KEY = 'library-pro-dbms';
 
 const CreateAdmin = () => {
@@ -27,8 +30,52 @@ const CreateAdmin = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const { addAdmin } = useAuth();
+  const { addAdmin, user } = useAuth();
   const navigate = useNavigate();
+
+  // ── Super admin gate ──────────────────────────────────────────────────────
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+
+  // Blocked screen for non-super admins
+  if (user && !isSuperAdmin) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl p-6">
+        <div className="glass-premium rounded-[2.5rem] p-10 max-w-md w-full text-center space-y-6 shadow-2xl border border-red-500/20">
+          {/* Icon */}
+          <div className="w-20 h-20 mx-auto rounded-full bg-red-500/10 border-2 border-red-500/20 flex items-center justify-center">
+            <ShieldX size={40} className="text-red-500" />
+          </div>
+
+          {/* Message */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-foreground tracking-tight">Access Restricted</h2>
+            <p className="text-muted-foreground text-sm font-semibold leading-relaxed">
+              Only the <span className="text-foreground font-black">Main Administrator</span> can create new admin accounts.
+            </p>
+            <p className="text-xs font-bold text-muted-foreground/60 mt-1 uppercase tracking-widest">
+              Contact: {SUPER_ADMIN_EMAIL}
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-border/60" />
+
+          {/* Sub-text */}
+          <p className="text-xs text-muted-foreground font-bold">
+            Your account does not have permission to perform this action. Please reach out to the main administrator.
+          </p>
+
+          {/* Back button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="btn-primary w-full justify-center py-3.5"
+          >
+            <ArrowLeft size={16} /> Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -105,6 +152,17 @@ const CreateAdmin = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors group"
+      >
+        <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-all">
+          <ArrowLeft size={16} />
+        </div>
+        Back
+      </button>
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -260,7 +318,7 @@ const CreateAdmin = () => {
             className="btn-primary w-full justify-center py-4 text-base mt-2 shadow-indigo-500/25"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full spin" />
+              <BtnSpinner />
             ) : (
               <span className="flex items-center gap-2">
                 <ShieldCheck size={18} /> Create Administrator Account

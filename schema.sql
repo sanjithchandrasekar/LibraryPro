@@ -1,13 +1,18 @@
--- Users table (merged from prompt details)
-CREATE TYPE user_role AS ENUM ('Student', 'Faculty');
+-- Users table
+CREATE TYPE user_role AS ENUM ('Student', 'Faculty', 'Admin');
 
 CREATE TABLE users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
-  role user_role NOT NULL,
+  role user_role NOT NULL DEFAULT 'Student',
   department TEXT,
+  password TEXT,           -- stored for display/reference (not used for auth)
+  roll_no TEXT,            -- student roll number
+  dob DATE,                -- date of birth
+  year TEXT,               -- academic year (e.g. "2nd Year")
+  gender TEXT,             -- Male / Female / Other
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -44,12 +49,12 @@ CREATE TABLE issues (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- NOTE: Staff table is mapped to Supabase auth.users in concept, 
--- but we can create a public table to store extra staff details linked to auth.users.
-CREATE TABLE staff (
-  staff_id UUID PRIMARY KEY, -- Will link to auth.users.id
+-- Admin table linked to Supabase auth.users
+CREATE TABLE admin (
+  admin_id UUID PRIMARY KEY, -- Links to auth.users.id
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  password TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -59,7 +64,7 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE books ENABLE ROW LEVEL SECURITY;
 ALTER TABLE issues ENABLE ROW LEVEL SECURITY;
-ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin ENABLE ROW LEVEL SECURITY;
 
 -- Allow read access to authenticated users for dropdowns, etc.
 CREATE POLICY "Enable read access for all authenticated users" ON users FOR SELECT TO authenticated USING (true);
@@ -74,7 +79,7 @@ CREATE POLICY "Enable insert/update access for all authenticated users" ON books
 CREATE POLICY "Enable read access for all authenticated users" ON issues FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Enable insert/update access for all authenticated users" ON issues FOR ALL TO authenticated USING (true);
 
-CREATE POLICY "Enable read access for associated staff" ON staff FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Enable read/write for associated admins" ON admin FOR ALL TO authenticated USING (true);
 
 -- Enable Supabase Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE books;

@@ -1,69 +1,112 @@
 import React from 'react';
-import { BookMarked } from 'lucide-react';
 
-const sizes = { sm: 'w-5 h-5 border-2', md: 'w-9 h-9 border-2', lg: 'w-14 h-14 border-3' };
-
-const Spinner = ({ size = 'md' }) => (
-  <div className="relative flex items-center justify-center">
-    <div className={`${sizes[size]} border-transparent border-t-primary border-r-primary rounded-full animate-spin duration-700`} />
-    <div className={`absolute inset-0 border-primary/20 ${sizes[size]} rounded-full`} />
-  </div>
+// ── Inline / small loader: animated 3-dot pulse ───────────────────────────────
+export const Dots = () => (
+  <span className="inline-flex items-center gap-1">
+    {[0, 1, 2].map(i => (
+      <span
+        key={i}
+        style={{ animationDelay: `${i * 0.15}s` }}
+        className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
+      />
+    ))}
+  </span>
 );
 
-const Loader = ({ fullPage = false, size = 'md' }) => {
+// ── Button spinner: small ring used inside buttons ────────────────────────────
+export const BtnSpinner = ({ light = true }) => (
+  <span
+    className={`inline-block w-4 h-4 rounded-full border-2 animate-spin
+      ${light ? 'border-white/30 border-t-white' : 'border-primary/30 border-t-primary'}`}
+  />
+);
+
+// ── Skeleton row (table) ──────────────────────────────────────────────────────
+export const SkeletonRow = () => (
+  <tr>
+    {[...Array(5)].map((_, i) => (
+      <td key={i} className="px-5 py-4">
+        <div className="skeleton h-4" style={{ width: `${[75, 55, 45, 65, 35][i]}%` }} />
+      </td>
+    ))}
+  </tr>
+);
+
+// ── Full-page / section loader ────────────────────────────────────────────────
+const Loader = ({ fullPage = false }) => {
   if (fullPage) {
     return (
-      <div className="fixed inset-0 bg-background/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center overflow-hidden">
-        {/* Background ambient glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-        
-        <div className="relative z-10 flex flex-col items-center gap-10 animate-in fade-in zoom-in duration-500">
-          <div className="relative group">
-            {/* Outer rings */}
-            <div className="absolute -inset-4 border border-primary/30 rounded-[3rem] animate-[spin_6s_linear_infinite]" />
-            <div className="absolute -inset-8 border border-primary/10 rounded-[3.5rem] animate-[spin_10s_linear_infinite_reverse]" />
-            
-            {/* Main icon container */}
-            <div className="w-24 h-24 bg-card/50 border border-primary/30 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-primary/20 relative overflow-hidden backdrop-blur-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-              <BookMarked size={40} className="text-primary group-hover:scale-110 transition-transform duration-500 relative z-10 drop-shadow-xl" />
-            </div>
-            
-            {/* Spinning indicator */}
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/40 animate-bounce">
-              <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-            </div>
+      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background overflow-hidden">
+        {/* Ambient background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-violet-500/8 blur-[100px]" />
+          <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-indigo-500/6 blur-[80px]" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-10">
+
+          {/* Book stack animation */}
+          <div className="relative w-20 flex flex-col-reverse items-center gap-1.5">
+            {[
+              { color: 'bg-violet-500', delay: '0s',    width: 'w-20' },
+              { color: 'bg-indigo-500', delay: '0.15s', width: 'w-16' },
+              { color: 'bg-purple-400', delay: '0.3s',  width: 'w-12' },
+              { color: 'bg-violet-300', delay: '0.45s', width: 'w-8'  },
+            ].map((book, i) => (
+              <div
+                key={i}
+                style={{
+                  animationDelay: book.delay,
+                  animationDuration: '1.2s',
+                }}
+                className={`${book.width} h-3 ${book.color} rounded-sm shadow-lg animate-[bookPulse_1.2s_ease-in-out_infinite]`}
+              />
+            ))}
+
+            {/* Shadow under the stack */}
+            <div className="w-20 h-1.5 rounded-full bg-black/10 dark:bg-black/30 blur-sm mt-1" />
           </div>
 
-          <div className="flex flex-col items-center gap-4">
-            <h2 className="text-3xl font-black tracking-widest text-foreground uppercase drop-shadow-sm">
-              Library<span className="text-primary">Pro</span>
-            </h2>
-            <div className="flex items-center gap-3 bg-muted/40 px-6 py-3 rounded-full border border-border/50 backdrop-blur-md shadow-inner">
-              <Spinner size="sm" />
-              <span className="text-xs text-muted-foreground font-black tracking-[0.2em] uppercase">Initializing Workspace</span>
+          {/* Brand name */}
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="text-3xl font-black tracking-tighter text-foreground">
+              Library<span className="text-violet-500">Pro</span>
+            </h1>
+
+            {/* Progress bar */}
+            <div className="w-48 h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full animate-[progressBar_1.8s_ease-in-out_infinite]" />
             </div>
+
+            <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-muted-foreground opacity-60">
+              Loading your workspace…
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
+  // ── Section-level loader (e.g. inside a card) ─────────────────────────────
   return (
-    <div className="flex items-center justify-center p-12 w-full h-full">
-      <Spinner size={size} />
+    <div className="flex flex-col items-center justify-center gap-4 py-16 w-full">
+      {/* Mini book stack */}
+      <div className="flex flex-col-reverse items-center gap-1">
+        {[
+          { color: 'bg-violet-500', delay: '0s',    width: 'w-10' },
+          { color: 'bg-indigo-500', delay: '0.15s', width: 'w-8'  },
+          { color: 'bg-purple-400', delay: '0.3s',  width: 'w-6'  },
+        ].map((book, i) => (
+          <div
+            key={i}
+            style={{ animationDelay: book.delay, animationDuration: '1.2s' }}
+            className={`${book.width} h-2 ${book.color} rounded-sm animate-[bookPulse_1.2s_ease-in-out_infinite]`}
+          />
+        ))}
+      </div>
+      <Dots />
     </div>
   );
 };
-
-export const SkeletonRow = () => (
-  <tr>
-    {[...Array(5)].map((_, i) => (
-      <td key={i} className="px-5 py-4">
-        <div className="skeleton h-4" style={{ width: `${[75, 55, 45, 65, 35][i]}%` }}></div>
-      </td>
-    ))}
-  </tr>
-);
 
 export default Loader;

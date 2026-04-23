@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BookMarked, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BtnSpinner } from '../components/common/Loader';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -55,7 +56,7 @@ const Login = () => {
           <div className="relative z-10">
             <div className="mb-10 text-center">
               <h2 className="text-4xl font-black text-foreground tracking-tighter">Sign In</h2>
-              <p className="text-muted-foreground font-semibold text-sm mt-2 opacity-80">Access your administrative tools</p>
+              <p className="text-muted-foreground font-semibold text-sm mt-2 opacity-80">Sign in as a Student or Administrator</p>
             </div>
 
             {error && (
@@ -116,7 +117,7 @@ const Login = () => {
                 className="btn-primary w-full justify-center py-4.5 text-base mt-2 shadow-indigo-500/25 active:scale-95 transition-all"
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full spin" />
+                  <BtnSpinner />
                 ) : (
                   <span className="flex items-center gap-2">Sign In to Dashboard <ArrowRight size={18} /></span>
                 )}

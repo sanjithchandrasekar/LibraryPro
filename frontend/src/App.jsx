@@ -11,20 +11,10 @@ import Users from './pages/Users';
 import Issues from './pages/Issues';
 import Reports from './pages/Reports';
 import TestConnection from './pages/TestConnection';
+import Loader from './components/common/Loader';
 
 // Full-screen auth loader — shown while the session is being read from Supabase
-const AuthLoader = () => (
-  <div style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    minHeight: '100vh', background: 'hsl(var(--background, 220 33% 98%))'
-  }}>
-    <div style={{
-      width: 40, height: 40, border: '3px solid rgba(139,92,246,0.2)',
-      borderTopColor: '#8b5cf6', borderRadius: '50%',
-      animation: 'spin 0.8s linear infinite'
-    }} />
-  </div>
-);
+const AuthLoader = () => <Loader fullPage />;
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -54,7 +44,7 @@ function App() {
           <Route path="/test" element={<TestConnection />} />
           <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/signup" element={user ? <Navigate to="/" replace /> : <StudentSignup />} />
-          <Route path="/create-admin" element={user && user.role === 'Admin' ? <Navigate to="/" replace /> : <CreateAdmin />} />
+          <Route path="/create-admin" element={<ProtectedRoute><CreateAdmin /></ProtectedRoute>} />
           
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />

@@ -3,12 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
   BookMarked, Mail, Lock, Eye, EyeOff, ArrowRight,
-  User, Phone, GraduationCap, Hash, Calendar, Sparkles
+  User, Phone, GraduationCap, Hash, Calendar, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, parseISO } from 'date-fns';
+import { BtnSpinner } from '../components/common/Loader';
 
 const DEPARTMENTS = [
   'Computer Science & Engineering',
@@ -121,6 +122,17 @@ const StudentSignup = () => {
         <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-purple-500/3 blur-3xl" />
       </div>
+
+      {/* Back Button — fixed top-left */}
+      <button
+        onClick={() => navigate('/login')}
+        className="fixed top-6 left-6 z-50 flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors group"
+      >
+        <div className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center shadow-sm group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-all">
+          <ArrowLeft size={16} />
+        </div>
+        <span className="hidden sm:inline">Back to Sign In</span>
+      </button>
 
       <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-500 relative z-10 py-8">
         {/* Branding */}
@@ -339,7 +351,7 @@ const StudentSignup = () => {
                 className="btn-primary w-full justify-center py-4 text-base mt-2 shadow-indigo-500/25 active:scale-95 transition-all"
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full spin" />
+                  <BtnSpinner />
                 ) : (
                   <span className="flex items-center gap-2">
                     Create Student Account <ArrowRight size={18} />

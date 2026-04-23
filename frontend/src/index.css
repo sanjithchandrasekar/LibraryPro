@@ -123,6 +123,17 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }
 
+@keyframes bookPulse {
+  0%, 100% { transform: translateY(0px); opacity: 1; }
+  50%       { transform: translateY(-6px); opacity: 0.7; }
+}
+
+@keyframes progressBar {
+  0%   { width: 0%;    margin-left: 0%; }
+  50%  { width: 70%;   margin-left: 15%; }
+  100% { width: 0%;    margin-left: 100%; }
+}
+
 .skeleton {
   @apply relative overflow-hidden bg-muted/60 rounded-2xl;
 }

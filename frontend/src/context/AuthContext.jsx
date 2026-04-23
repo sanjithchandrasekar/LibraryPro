@@ -24,34 +24,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session on mount — use metadata first, DB only as fallback
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const meta = session.user.user_metadata || {};
-          // If role is already in metadata (set during signup), skip DB queries
-          if (meta.role) {
-            setUser(buildUser(session.user));
-          } else {
-            // Legacy accounts: fetch from DB once
-            const [adminRes, userRes] = await Promise.all([
-              supabase.from('admin').select('name').eq('email', session.user.email).maybeSingle(),
-              supabase.from('users').select('name, role').eq('email', session.user.email).maybeSingle()
-            ]);
-            setUser(buildUser(session.user, adminRes.data || userRes.data));
-          }
+    // onAuthStateChange fires INITIAL_SESSION immediately on mount —
+    // no need for a separate getSession() call. One network round-trip only.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const meta = session.user.user_metadata || {};
+        if (meta.role) {
+          // ✅ Fast path: role already in metadata — zero extra DB queries
+          setUser(buildUser(session.user));
+          setLoading(false);
+        } else {
+          // Legacy accounts only — parallel DB lookup
+          const [adminRes, userRes] = await Promise.all([
+            supabase.from('admin').select('name').eq('email', session.user.email).maybeSingle(),
+            supabase.from('users').select('name, role').eq('email', session.user.email).maybeSingle()
+          ]);
+          setUser(buildUser(session.user, adminRes.data || userRes.data));
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // Keep session in sync across tabs
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
+      } else {
         setUser(null);
         setLoading(false);
       }
@@ -121,7 +112,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const addAdmin = async ({ name, email, password }) => {
-    // Bake name & role into metadata so admin logins skip DB queries too
+    // ── Step 1: Save the CURRENT admin's session so we can restore it later ──
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+    // ── Step 2: Create the new admin in Supabase Auth ─────────────────────────
+    // NOTE: signUp() auto-logs in the new user — we fix this in step 4
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -135,18 +130,37 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (authData.user) {
+      // ── Step 3: Insert into admin table (while signed in as new user) ──────
       const { error: adminError } = await supabase.from('admin').insert([{
         admin_id: authData.user.id,
         email,
         name,
-        password
+        password,
       }]);
 
       if (adminError) {
-        console.error('Admin creation database error:', adminError);
+        console.error('Admin insert error:', adminError);
+        // Still restore the original session even on DB error
+        if (currentSession) {
+          await supabase.auth.setSession({
+            access_token: currentSession.access_token,
+            refresh_token: currentSession.refresh_token,
+          });
+          setUser(buildUser(currentSession.user));
+        }
         return { error: { message: `Database Error: ${adminError.message}` } };
       }
     }
+
+    // ── Step 4: Restore the ORIGINAL admin's session ──────────────────────────
+    if (currentSession) {
+      await supabase.auth.setSession({
+        access_token: currentSession.access_token,
+        refresh_token: currentSession.refresh_token,
+      });
+      setUser(buildUser(currentSession.user));
+    }
+
     return { error: null };
   };
 
