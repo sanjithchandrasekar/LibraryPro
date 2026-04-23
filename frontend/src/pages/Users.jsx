@@ -5,17 +5,19 @@ import Modal from '../components/common/Modal';
 import {
   Plus, Search, Edit2, Trash2, History,
   GraduationCap, Users as UsersIcon, Mail, Phone, Building2,
-  BookOpen, Clock, CheckCircle2, AlertTriangle
+  BookOpen, Clock, CheckCircle2, AlertTriangle, ShieldPlus
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { BtnSpinner } from '../components/common/Loader';
 
 const RoleBadge = ({ role }) => (
-  <span className={`badge ${role === 'Faculty'
-    ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40'
-    : 'bg-blue-100 text-blue-700 dark:bg-blue-950/40'
+  <span className={`badge ${
+    role === 'Admin' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40' :
+    role === 'Faculty' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40' :
+    'bg-blue-100 text-blue-700 dark:bg-blue-950/40'
   }`}>
-    {role === 'Faculty' ? '👨‍🏫' : '🎓'} {role}
+    {role === 'Admin' ? '🛡️' : role === 'Faculty' ? '👨‍🏫' : '🎓'} {role}
   </span>
 );
 
@@ -116,7 +118,8 @@ const Users = () => {
   const stats = [
     { label: 'Total Members', value: users.length, icon: UsersIcon, color: 'bg-indigo-500' },
     { label: 'Students', value: users.filter(u => u.role === 'Student').length, icon: GraduationCap, color: 'bg-emerald-500' },
-    { label: 'Faculty', value: users.filter(u => u.role === 'Faculty').length, icon: Building2, color: 'bg-amber-500' },
+    { label: 'Faculty', value: users.filter(u => u.role === 'Faculty').length, icon: Building2, color: 'bg-indigo-400' },
+    { label: 'Admins', value: users.filter(u => u.role === 'Admin').length, icon: ShieldPlus, color: 'bg-amber-500' },
   ];
 
   return (
@@ -133,7 +136,7 @@ const Users = () => {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((s, i) => (
           <div key={i} className="bg-card border border-border rounded-3xl p-6 shadow-sm flex items-center gap-5">
             <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center shadow-lg shadow-indigo-500/10`}>
@@ -187,7 +190,7 @@ const Users = () => {
                   <button onClick={() => openHistory(user)} className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground" title="History"><History size={16} /></button>
                   <button onClick={() => openEdit(user)} className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground" title="Edit"><Edit2 size={16} /></button>
                   <button onClick={() => handleDelete(user.user_id)} disabled={deleting === user.user_id} className="p-1.5 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0" title="Remove">
-                    {deleting === user.user_id ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full spin" /> : <Trash2 size={16} />}
+                    {deleting === user.user_id ? <BtnSpinner light={false} /> : <Trash2 size={16} />}
                   </button>
                 </div>
               </div>
@@ -235,7 +238,7 @@ const Users = () => {
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-border hover:bg-muted transition-colors font-bold text-sm">Cancel</button>
             <button type="submit" disabled={submitting} className="flex-1 btn-primary justify-center py-3">
-              {submitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spin" /> : (editingUser ? 'Save Changes' : 'Register')}
+              {submitting ? <BtnSpinner /> : (editingUser ? 'Save Changes' : 'Register')}
             </button>
           </div>
         </form>

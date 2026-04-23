@@ -1,9 +1,15 @@
 import { supabase } from './supabaseClient';
 
+// Columns returned for user listings — excludes sensitive password field
+const USER_COLUMNS = 'user_id, name, email, phone, role, department, roll_no, dob, year, gender, created_at';
+
 export const userService = {
   getUsers: async (search = '') => {
-    let query = supabase.from('users').select('*').order('created_at', { ascending: false });
-    
+    let query = supabase
+      .from('users')
+      .select(USER_COLUMNS)
+      .order('created_at', { ascending: false });
+
     if (search) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,department.ilike.%${search}%`);
     }
@@ -13,22 +19,42 @@ export const userService = {
     return data;
   },
 
-  updateUser: async (id, updates) => {
+  addUser: async ({ name, email, phone, role, department }) => {
+    // Manually register a user from the admin panel (no Supabase Auth account created)
     const { data, error } = await supabase
       .from('users')
-      .update(updates)
-      .eq('user_id', id)
-      .select()
+      .insert([{
+        name,
+        email,
+        phone: phone || null,
+        role,
+        department: department || null,
+      }])
+      .select(USER_COLUMNS)
       .single();
-      
+
+    if (error) throw error;
+    return data;
+  },
+
+  updateUser: async (id, updates) => {
+    // Strip out any fields that shouldn't be overwritten via the admin form
+    const { password, user_id, created_at, ...safeUpdates } = updates;
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(safeUpdates)
+      .eq('user_id', id)
+      .select(USER_COLUMNS)
+      .single();
+
     if (error) throw error;
     return data;
   },
 
   deleteUser: async (id) => {
-    // Note: Depends on RLS policies and FK cascades. 
-    // Usually deleting from auth.users via edge function is required to fully delete auth records.
-    // For now we just delete from public.users
+    // Note: This only removes the public.users record.
+    // The corresponding auth.users entry (if any) must be removed via a Supabase Edge Function.
     const { error } = await supabase.from('users').delete().eq('user_id', id);
     if (error) throw error;
   },
@@ -36,14 +62,11 @@ export const userService = {
   getUserHistory: async (userId) => {
     const { data, error } = await supabase
       .from('issues')
-      .select(`
-        *,
-        books ( title )
-      `)
+      .select('*, books ( title )')
       .eq('user_id', userId)
       .order('issue_date', { ascending: false });
 
     if (error) throw error;
     return data;
-  }
+  },
 };
